@@ -5,7 +5,8 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test tests/app.test.js",
+"test:live": "node tests/live-check.js"
   },
   "keywords": [],
   "author": "",

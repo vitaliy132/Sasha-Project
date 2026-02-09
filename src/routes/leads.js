@@ -29,8 +29,9 @@ router.post("/manychat", async (req, res) => {
 
     return res.status(200).send("Lead accepted");
   } catch (err) {
-    logger.error("Lead processing error:", err);
-    return res.status(500).send("Server error");
+    logger.error("Lead processing error:", err.message || err);
+    if (err.code) logger.error("Error code:", err.code);
+    return res.status(500).json({ error: "Server error", message: "Lead could not be sent." });
   }
 });
 
