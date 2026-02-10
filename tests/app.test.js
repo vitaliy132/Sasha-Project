@@ -75,6 +75,16 @@ describe("API", () => {
     });
   });
 
+  describe("GET /api/leads/manychat", () => {
+    it("returns 200 and a helpful message", async () => {
+      const res = await fetch(baseUrl + "/api/leads/manychat");
+      assert.strictEqual(res.status, 200);
+      const body = await res.json();
+      assert.strictEqual(body.method, "POST");
+      assert.strictEqual(body.path, "/api/leads/manychat");
+    });
+  });
+
   describe("POST /api/leads/manychat", () => {
     it("returns 401 without x-webhook-secret", async () => {
       const res = await fetch(baseUrl + "/api/leads/manychat", {

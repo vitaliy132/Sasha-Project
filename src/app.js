@@ -6,6 +6,7 @@ const cors = require("cors");
 const morgan = require("morgan");
 
 const logger = require("./utils/logger");
+const { verifySmtp } = require("./services/mailer");
 const app = express();
 
 const requiredEnv = ["WEBHOOK_SECRET", "SMTP_HOST", "SMTP_USER", "SMTP_PASS", "CRM_EMAIL"];
@@ -28,6 +29,7 @@ app.get("/", (req, res) => {
     message: "Lead webhook API. Use POST /api/leads/manychat with x-webhook-secret.",
     health: "/health",
     envCheck: "/api/env-check",
+    smtpCheck: "/api/smtp-check",
   });
 });
 
@@ -41,6 +43,26 @@ app.get("/api/env-check", (req, res) => {
   );
   const allSet = required.every((key) => status[key]);
   res.json({ ok: allSet, keys: status });
+});
+
+// Optional SMTP connectivity check for debugging.
+// Enable with ENABLE_SMTP_DEBUG=1 (to avoid exposing details accidentally).
+app.get("/api/smtp-check", async (req, res) => {
+  if (process.env.ENABLE_SMTP_DEBUG !== "1") {
+    return res.status(404).json({ error: "Not found" });
+  }
+  try {
+    await verifySmtp();
+    return res.json({ ok: true });
+  } catch (err) {
+    logger.error("SMTP verify failed:", err.message || err);
+    if (err.code) logger.error("SMTP error code:", err.code);
+    return res.status(500).json({
+      ok: false,
+      error: err.message || "SMTP verification failed",
+      code: err.code || null,
+    });
+  }
 });
 
 app.use("/api/leads", require("./routes/leads"));

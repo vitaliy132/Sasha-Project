@@ -7,6 +7,17 @@ const { sendLeadEmail } = require("../services/mailer");
 const { formatLeadEmail } = require("../services/formatter");
 const logger = require("../utils/logger");
 
+// ManyChat may do a GET when you paste/test the URL in the UI.
+// Keep GET simple so the URL looks healthy in a browser,
+// while POST is used for the actual webhook.
+router.get("/manychat", (req, res) => {
+  return res.status(200).json({
+    message: "ManyChat leads endpoint is live. Use POST with JSON body.",
+    method: "POST",
+    path: "/api/leads/manychat",
+  });
+});
+
 router.post("/manychat", async (req, res) => {
   try {
     // 🔐 Verify webhook secret
