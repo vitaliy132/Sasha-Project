@@ -18,6 +18,32 @@ router.get("/manychat", (req, res) => {
   });
 });
 
+// Simple protected test endpoint: sends a test email with body "123"
+router.post("/test", async (req, res) => {
+  try {
+    if (req.headers["x-webhook-secret"] !== process.env.WEBHOOK_SECRET) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    const testLead = {
+      first_name: "Test",
+      last_name: "Lead",
+      email: process.env.CRM_EMAIL,
+      phone: "",
+      platform: "manual-test",
+    };
+
+    const body = "123";
+    await sendLeadEmail(body, testLead);
+
+    return res.status(200).send("Test email sent");
+  } catch (err) {
+    logger.error("Test email error:", err.message || err);
+    if (err.code) logger.error("Error code:", err.code);
+    return res.status(500).json({ error: "Server error", message: "Test email failed." });
+  }
+});
+
 router.post("/manychat", async (req, res) => {
   try {
     // 🔐 Verify webhook secret
