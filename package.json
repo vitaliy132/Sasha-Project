@@ -6,13 +6,14 @@
   "scripts": {
     "start": "node app.js",
     "test": "node --test tests/app.test.js",
-"test:live": "node tests/live-check.js"
+    "test:live": "node tests/live-check.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",

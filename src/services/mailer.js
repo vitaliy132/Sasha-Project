@@ -1,7 +1,18 @@
 // Mailer service
-const nodemailer = require("nodemailer");
+// In production on Render, direct SMTP to Gmail is blocked (ENETUNREACH).
+// Use SendGrid HTTP API when SENDGRID_API_KEY is set; otherwise fall back to SMTP
+// (for local development where SMTP is allowed).
 
-const transporter = nodemailer.createTransport({
+const nodemailer = require("nodemailer");
+const sgMail = require("@sendgrid/mail");
+
+const useSendGrid = !!process.env.SENDGRID_API_KEY;
+
+if (useSendGrid) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
+
+const smtpTransporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT || 587),
   secure: false, // STARTTLS on port 587
@@ -13,14 +24,33 @@ const transporter = nodemailer.createTransport({
 
 // Quick connectivity check used by /api/smtp-check (for debugging)
 exports.verifySmtp = async () => {
-  return transporter.verify();
+  if (useSendGrid) {
+    // For SendGrid we don't have a "verify" call; assume ok if key is present.
+    return true;
+  }
+  return smtpTransporter.verify();
 };
 
 exports.sendLeadEmail = async (body, lead) => {
-  await transporter.sendMail({
+  const subject = `New Lead | ${lead.first_name} ${lead.last_name}`;
+
+  if (useSendGrid) {
+    await sgMail.send({
+      to: process.env.CRM_EMAIL,
+      from:
+        process.env.SENDGRID_FROM ||
+        process.env.SMTP_USER ||
+        process.env.CRM_EMAIL,
+      subject,
+      text: body,
+    });
+    return;
+  }
+
+  await smtpTransporter.sendMail({
     from: `"ManyChat Leads" <${process.env.SMTP_USER}>`,
     to: process.env.CRM_EMAIL,
-    subject: `New Lead | ${lead.first_name} ${lead.last_name}`,
+    subject,
     text: body,
   });
 };
