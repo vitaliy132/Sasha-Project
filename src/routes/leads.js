@@ -7,6 +7,38 @@ const { sendLeadEmail } = require("../services/mailer");
 const { formatLeadEmail } = require("../services/formatter");
 const logger = require("../utils/logger");
 
+const isAuthorized = (providedSecret) =>
+  providedSecret === process.env.WEBHOOK_SECRET;
+
+const buildTestLead = () => ({
+  first_name: "Test",
+  last_name: "Lead",
+  email: process.env.CRM_EMAIL,
+  phone: "",
+  platform: "manual-test",
+});
+
+// Normalize ManyChat-style payloads into our internal lead shape.
+// Accepts:
+// - phone
+// - home_phone / cell_phone (ManyChat example you sent)
+// and fills optional fields with sensible defaults.
+const normalizeLeadPayload = (payload) => {
+  const phone =
+    payload.phone || payload.cell_phone || payload.home_phone || "";
+
+  return {
+    first_name: payload.first_name,
+    last_name: payload.last_name,
+    email: payload.email,
+    phone,
+    interest: payload.interest || "",
+    notes: payload.notes || "",
+    platform: payload.platform || "manychat",
+    campaign: payload.campaign || "",
+  };
+};
+
 // ManyChat may do a GET when you paste/test the URL in the UI.
 // Keep GET simple so the URL looks healthy in a browser,
 // while POST is used for the actual webhook.
@@ -22,20 +54,11 @@ router.get("/manychat", (req, res) => {
 // POST is for tools / scripts (header-based secret).
 router.post("/test", async (req, res) => {
   try {
-    if (req.headers["x-webhook-secret"] !== process.env.WEBHOOK_SECRET) {
+    if (!isAuthorized(req.headers["x-webhook-secret"])) {
       return res.status(401).send("Unauthorized");
     }
 
-    const testLead = {
-      first_name: "Test",
-      last_name: "Lead",
-      email: process.env.CRM_EMAIL,
-      phone: "",
-      platform: "manual-test",
-    };
-
-    const body = "123";
-    await sendLeadEmail(body, testLead);
+    await sendLeadEmail("123", buildTestLead());
 
     return res.status(200).send("Test email sent");
   } catch (err) {
@@ -49,20 +72,11 @@ router.post("/test", async (req, res) => {
 // https://.../api/leads/test?secret=YOUR_WEBHOOK_SECRET
 router.get("/test", async (req, res) => {
   try {
-    if (req.query.secret !== process.env.WEBHOOK_SECRET) {
+    if (!isAuthorized(req.query.secret)) {
       return res.status(401).send("Unauthorized");
     }
 
-    const testLead = {
-      first_name: "Test",
-      last_name: "Lead",
-      email: process.env.CRM_EMAIL,
-      phone: "",
-      platform: "manual-test",
-    };
-
-    const body = "123";
-    await sendLeadEmail(body, testLead);
+    await sendLeadEmail("123", buildTestLead());
 
     return res.status(200).send("Test email sent (GET)");
   } catch (err) {
@@ -75,12 +89,13 @@ router.get("/test", async (req, res) => {
 router.post("/manychat", async (req, res) => {
   try {
     // 🔐 Verify webhook secret
-    if (req.headers["x-webhook-secret"] !== process.env.WEBHOOK_SECRET) {
+    if (!isAuthorized(req.headers["x-webhook-secret"])) {
       return res.status(401).send("Unauthorized");
     }
 
-    // ✅ Validate data
-    const { error, value } = schema.validate(req.body);
+    // ✅ Normalize incoming payload (ManyChat) and validate
+    const normalized = normalizeLeadPayload(req.body || {});
+    const { error, value } = schema.validate(normalized);
     if (error) {
       logger.error("Validation error:", error.details);
       return res.status(400).send("Invalid lead data");

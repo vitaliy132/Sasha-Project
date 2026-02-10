@@ -7,6 +7,8 @@ const nodemailer = require("nodemailer");
 const sgMail = require("@sendgrid/mail");
 
 const useSendGrid = !!process.env.SENDGRID_API_KEY;
+const FROM_ADDRESS =
+  process.env.SENDGRID_FROM || process.env.SMTP_USER || process.env.CRM_EMAIL;
 
 if (useSendGrid) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -37,10 +39,7 @@ exports.sendLeadEmail = async (body, lead) => {
   if (useSendGrid) {
     await sgMail.send({
       to: process.env.CRM_EMAIL,
-      from:
-        process.env.SENDGRID_FROM ||
-        process.env.SMTP_USER ||
-        process.env.CRM_EMAIL,
+      from: FROM_ADDRESS,
       subject,
       text: body,
     });

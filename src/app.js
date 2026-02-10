@@ -9,8 +9,11 @@ const logger = require("./utils/logger");
 const { verifySmtp } = require("./services/mailer");
 const app = express();
 
-const requiredEnv = ["WEBHOOK_SECRET", "SMTP_HOST", "SMTP_USER", "SMTP_PASS", "CRM_EMAIL"];
-const missing = requiredEnv.filter((key) => !process.env[key]?.trim());
+// All env vars required for the app to start.
+const REQUIRED_ENV = ["WEBHOOK_SECRET", "SMTP_HOST", "SMTP_USER", "SMTP_PASS", "CRM_EMAIL"];
+const hasEnv = (key) => !!process.env[key]?.trim();
+
+const missing = REQUIRED_ENV.filter((key) => !hasEnv(key));
 if (missing.length) {
   logger.error("Missing required env:", missing.join(", "));
   process.exit(1);
@@ -37,11 +40,8 @@ app.get("/health", (req, res) => res.status(200).send("OK"));
 
 // Env check: confirms required keys are set (no values exposed)
 app.get("/api/env-check", (req, res) => {
-  const required = ["WEBHOOK_SECRET", "SMTP_HOST", "SMTP_USER", "SMTP_PASS", "CRM_EMAIL"];
-  const status = Object.fromEntries(
-    required.map((key) => [key, !!process.env[key]?.trim()])
-  );
-  const allSet = required.every((key) => status[key]);
+  const status = Object.fromEntries(REQUIRED_ENV.map((key) => [key, hasEnv(key)]));
+  const allSet = REQUIRED_ENV.every((key) => status[key]);
   res.json({ ok: allSet, keys: status });
 });
 
