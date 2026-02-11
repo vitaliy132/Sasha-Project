@@ -18,6 +18,21 @@ const buildTestLead = () => ({
   platform: "manual-test",
 });
 
+/**
+ * Shared helper to send the fixed test email body "123" to the CRM address,
+ * and standardize success / error handling for the test endpoints.
+ */
+const sendTestEmailResponse = async (res, { successText, failureText, logPrefix }) => {
+  try {
+    await sendLeadEmail("123", buildTestLead());
+    return res.status(200).send(successText);
+  } catch (err) {
+    logger.error(logPrefix, err.message || err);
+    if (err.code) logger.error("Error code:", err.code);
+    return res.status(500).json({ error: "Server error", message: failureText });
+  }
+};
+
 // Normalize ManyChat-style payloads into our internal lead shape.
 // Accepts:
 // - phone
@@ -53,37 +68,29 @@ router.get("/manychat", (req, res) => {
 // Simple protected test endpoint: sends a test email with body "123"
 // POST is for tools / scripts (header-based secret).
 router.post("/test", async (req, res) => {
-  try {
-    if (!isAuthorized(req.headers["x-webhook-secret"])) {
-      return res.status(401).send("Unauthorized");
-    }
-
-    await sendLeadEmail("123", buildTestLead());
-
-    return res.status(200).send("Test email sent");
-  } catch (err) {
-    logger.error("Test email error:", err.message || err);
-    if (err.code) logger.error("Error code:", err.code);
-    return res.status(500).json({ error: "Server error", message: "Test email failed." });
+  if (!isAuthorized(req.headers["x-webhook-secret"])) {
+    return res.status(401).send("Unauthorized");
   }
+
+  return sendTestEmailResponse(res, {
+    successText: "Test email sent",
+    failureText: "Test email failed.",
+    logPrefix: "Test email error:",
+  });
 });
 
 // GET variant for quick manual testing from a browser:
 // https://.../api/leads/test?secret=YOUR_WEBHOOK_SECRET
 router.get("/test", async (req, res) => {
-  try {
-    if (!isAuthorized(req.query.secret)) {
-      return res.status(401).send("Unauthorized");
-    }
-
-    await sendLeadEmail("123", buildTestLead());
-
-    return res.status(200).send("Test email sent (GET)");
-  } catch (err) {
-    logger.error("Test email (GET) error:", err.message || err);
-    if (err.code) logger.error("Error code:", err.code);
-    return res.status(500).json({ error: "Server error", message: "Test email (GET) failed." });
+  if (!isAuthorized(req.query.secret)) {
+    return res.status(401).send("Unauthorized");
   }
+
+  return sendTestEmailResponse(res, {
+    successText: "Test email sent (GET)",
+    failureText: "Test email (GET) failed.",
+    logPrefix: "Test email (GET) error:",
+  });
 });
 
 router.post("/manychat", async (req, res) => {
