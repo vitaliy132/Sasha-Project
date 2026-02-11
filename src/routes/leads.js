@@ -7,8 +7,7 @@ const { sendLeadEmail } = require("../services/mailer");
 const { formatLeadEmail } = require("../services/formatter");
 const logger = require("../utils/logger");
 
-const isAuthorized = (providedSecret) =>
-  providedSecret === process.env.WEBHOOK_SECRET;
+const isAuthorized = (providedSecret) => providedSecret === process.env.WEBHOOK_SECRET;
 
 const buildTestLead = () => ({
   first_name: "Test",
@@ -39,18 +38,17 @@ const sendTestEmailResponse = async (res, { successText, failureText, logPrefix 
 // - home_phone / cell_phone (ManyChat example you sent)
 // and fills optional fields with sensible defaults.
 const normalizeLeadPayload = (payload) => {
-  const phone =
-    payload.phone || payload.cell_phone || payload.home_phone || "";
+  const phone = payload.phone || payload.cell_phone || payload.home_phone || "";
 
   return {
     first_name: payload.first_name,
     last_name: payload.last_name,
-    email: payload.email,
-    phone,
-    interest: payload.interest || "",
-    notes: payload.notes || "",
-    platform: payload.platform || "manychat",
-    campaign: payload.campaign || "",
+    ...(payload.email && { email: payload.email }),
+    ...(phone && { phone }),
+    ...(payload.interest && { interest: payload.interest }),
+    ...(payload.notes && { notes: payload.notes }),
+    ...(payload.platform && { platform: payload.platform }),
+    ...(payload.campaign && { campaign: payload.campaign }),
   };
 };
 
