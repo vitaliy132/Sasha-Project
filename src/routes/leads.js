@@ -5,22 +5,23 @@ const router = express.Router();
 const schema = require("../validators/lead.schema");
 const { sendLeadEmail } = require("../services/mailer");
 const { formatLeadEmail } = require("../services/formatter");
-const { appendLeadToSheet } = require("../services/sheets");
+const { appendLeadToSheet, checkLeadExists, markLeadAsSentToCRM } = require("../services/sheets");
 const logger = require("../utils/logger");
 
+// Constants
 const isAuthorized = (providedSecret) => providedSecret === process.env.WEBHOOK_SECRET;
 
+// Test lead template
 const buildTestLead = () => ({
   first_name: "Test",
   last_name: "Lead",
   email: process.env.CRM_EMAIL,
-  phone: "",
+  phone: "555-0000",
   platform: "manual-test",
 });
 
 /**
- * Shared helper to send the fixed test email body "123" to the CRM address,
- * and standardize success / error handling for the test endpoints.
+ * Send test email with standardized response handling
  */
 const sendTestEmailResponse = async (res, { successText, failureText, logPrefix }) => {
   try {
@@ -33,19 +34,18 @@ const sendTestEmailResponse = async (res, { successText, failureText, logPrefix 
   }
 };
 
-// Normalize ManyChat-style payloads into our internal lead shape.
-// Accepts:
-// - phone
-// - home_phone / cell_phone (ManyChat example you sent)
-// and fills optional fields with sensible defaults.
+/**
+ * Normalize ManyChat payload to internal lead format
+ * Handles multiple phone field variations
+ */
 const normalizeLeadPayload = (payload) => {
   const phone = payload.phone || payload.cell_phone || payload.home_phone || "";
 
   return {
     first_name: payload.first_name,
     last_name: payload.last_name,
-    ...(payload.email && { email: payload.email }),
-    ...(phone && { phone }),
+    email: payload.email,
+    phone,
     ...(payload.interest && { interest: payload.interest }),
     ...(payload.notes && { notes: payload.notes }),
     ...(payload.platform && { platform: payload.platform }),
@@ -53,9 +53,90 @@ const normalizeLeadPayload = (payload) => {
   };
 };
 
-// ManyChat may do a GET when you paste/test the URL in the UI.
-// Keep GET simple so the URL looks healthy in a browser,
-// while POST is used for the actual webhook.
+/**
+ * Process and validate lead
+ */
+const processLead = async (normalized) => {
+  // Check for duplicate lead by email
+  const existingLead = await checkLeadExists(normalized.email);
+  if (existingLead) {
+    const wasAlreadySent = existingLead.get("sent_to_crm") === "yes";
+    return {
+      success: false,
+      statusCode: 409,
+      data: {
+        message: wasAlreadySent
+          ? "Lead already sent to CRM (duplicate)"
+          : "Lead already exists in system (may have failed validation)",
+        validated: existingLead.get("validated"),
+        duplicate: true,
+      },
+    };
+  }
+
+  const { error, value } = schema.validate(normalized);
+  const isValid = !error;
+
+  // Always log to Google Sheets
+  try {
+    const appended = await appendLeadToSheet(normalized, isValid);
+    if (!appended) {
+      // Duplicate detected during append (race condition)
+      return {
+        success: false,
+        statusCode: 409,
+        data: {
+          message: "Lead already exists in sheet (duplicate)",
+          duplicate: true,
+        },
+      };
+    }
+  } catch (sheetErr) {
+    logger.error("Failed to append to Google Sheets:", sheetErr.message || sheetErr);
+  }
+
+  if (!isValid) {
+    return {
+      success: false,
+      statusCode: 400,
+      data: {
+        message: "Lead data incomplete or invalid. Appended to sheets with validated: no",
+        errors: error.details,
+      },
+    };
+  }
+
+  // Send to CRM if valid
+  try {
+    const emailBody = formatLeadEmail(value);
+    await sendLeadEmail(emailBody, value);
+
+    // Mark as sent to CRM after successful send
+    await markLeadAsSentToCRM(normalized.email);
+  } catch (emailErr) {
+    logger.error("Failed to send lead email:", emailErr.message || emailErr);
+    return {
+      success: false,
+      statusCode: 500,
+      data: {
+        error: "Server error",
+        message: "Lead validated but email delivery failed",
+      },
+    };
+  }
+
+  return {
+    success: true,
+    statusCode: 200,
+    data: {
+      message: "Lead accepted and sent to CRM",
+      validated: true,
+    },
+  };
+};
+
+// Routes
+
 router.get("/manychat", (req, res) => {
   return res.status(200).json({
     message: "ManyChat leads endpoint is live. Use POST with JSON body.",
@@ -64,8 +145,6 @@ router.get("/manychat", (req, res) => {
   });
 });
 
-// Simple protected test endpoint: sends a test email with body "123"
-// POST is for tools / scripts (header-based secret).
 router.post("/test", async (req, res) => {
   if (!isAuthorized(req.headers["x-webhook-secret"])) {
     return res.status(401).send("Unauthorized");
@@ -78,8 +157,6 @@ router.post("/test", async (req, res) => {
   });
 });
 
-// GET variant for quick manual testing from a browser:
-// https://.../api/leads/test?secret=YOUR_WEBHOOK_SECRET
 router.get("/test", async (req, res) => {
   if (!isAuthorized(req.query.secret)) {
     return res.status(401).send("Unauthorized");
@@ -94,48 +171,23 @@ router.get("/test", async (req, res) => {
 
 router.post("/manychat", async (req, res) => {
   try {
-    // 🔐 Verify webhook secret
+    // Verify webhook secret
     if (!isAuthorized(req.headers["x-webhook-secret"])) {
       return res.status(401).send("Unauthorized");
     }
 
-    // ✅ Normalize incoming payload (ManyChat) and validate
+    // Normalize and process lead
     const normalized = normalizeLeadPayload(req.body || {});
-    const { error, value } = schema.validate(normalized);
-    const isValid = !error;
+    const result = await processLead(normalized);
 
-    // 📊 Always append to Google Sheets (with validation status)
-    try {
-      await appendLeadToSheet(normalized, isValid);
-    } catch (sheetErr) {
-      // Log error but don't fail the entire request
-      logger.error("Failed to append to Google Sheets:", sheetErr.message || sheetErr);
-      // Continue processing anyway
-    }
-
-    // If validation failed, return early (don't send to CRM)
-    if (!isValid) {
-      logger.warn("Lead validation failed:", error.details);
-      return res.status(400).json({
-        message: "Lead data incomplete or invalid. Appended to sheets with validated: no",
-        errors: error.details,
-      });
-    }
-
-    // 🧩 Format email
-    const emailBody = formatLeadEmail(value);
-
-    // 📧 Send email to CRM (only if validated)
-    await sendLeadEmail(emailBody, value);
-
-    return res.status(200).json({
-      message: "Lead accepted and sent to CRM",
-      validated: true,
-    });
+    return res.status(result.statusCode).json(result.data);
   } catch (err) {
     logger.error("Lead processing error:", err.message || err);
     if (err.code) logger.error("Error code:", err.code);
-    return res.status(500).json({ error: "Server error", message: "Lead could not be processed." });
+    return res.status(500).json({
+      error: "Server error",
+      message: "Lead could not be processed.",
+    });
   }
 });
 
