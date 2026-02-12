@@ -21,3 +21,5 @@ Thumbs.db
 *.swp
 *.swo
 .env
+GOOGLE_SHEETS_SETUP.md
+IMPLEMENTATION_SUMMARY.md

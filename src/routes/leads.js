@@ -5,6 +5,7 @@ const router = express.Router();
 const schema = require("../validators/lead.schema");
 const { sendLeadEmail } = require("../services/mailer");
 const { formatLeadEmail } = require("../services/formatter");
+const { appendLeadToSheet } = require("../services/sheets");
 const logger = require("../utils/logger");
 
 const isAuthorized = (providedSecret) => providedSecret === process.env.WEBHOOK_SECRET;
@@ -101,22 +102,40 @@ router.post("/manychat", async (req, res) => {
     // ✅ Normalize incoming payload (ManyChat) and validate
     const normalized = normalizeLeadPayload(req.body || {});
     const { error, value } = schema.validate(normalized);
-    if (error) {
-      logger.error("Validation error:", error.details);
-      return res.status(400).send("Invalid lead data");
+    const isValid = !error;
+
+    // 📊 Always append to Google Sheets (with validation status)
+    try {
+      await appendLeadToSheet(normalized, isValid);
+    } catch (sheetErr) {
+      // Log error but don't fail the entire request
+      logger.error("Failed to append to Google Sheets:", sheetErr.message || sheetErr);
+      // Continue processing anyway
+    }
+
+    // If validation failed, return early (don't send to CRM)
+    if (!isValid) {
+      logger.warn("Lead validation failed:", error.details);
+      return res.status(400).json({
+        message: "Lead data incomplete or invalid. Appended to sheets with validated: no",
+        errors: error.details,
+      });
     }
 
     // 🧩 Format email
     const emailBody = formatLeadEmail(value);
 
-    // 📧 Send email
+    // 📧 Send email to CRM (only if validated)
     await sendLeadEmail(emailBody, value);
 
-    return res.status(200).send("Lead accepted");
+    return res.status(200).json({
+      message: "Lead accepted and sent to CRM",
+      validated: true,
+    });
   } catch (err) {
     logger.error("Lead processing error:", err.message || err);
     if (err.code) logger.error("Error code:", err.code);
-    return res.status(500).json({ error: "Server error", message: "Lead could not be sent." });
+    return res.status(500).json({ error: "Server error", message: "Lead could not be processed." });
   }
 });
 

@@ -11,6 +11,13 @@ const app = express();
 
 // All env vars required for the app to start.
 const REQUIRED_ENV = ["WEBHOOK_SECRET", "SMTP_HOST", "SMTP_USER", "SMTP_PASS", "CRM_EMAIL"];
+// Google Sheets is optional - only required if you want to log to sheets
+const OPTIONAL_ENV = [
+  "GOOGLE_SHEET_ID",
+  "GOOGLE_PROJECT_ID",
+  "GOOGLE_CLIENT_EMAIL",
+  "GOOGLE_PRIVATE_KEY",
+];
 const hasEnv = (key) => !!process.env[key]?.trim();
 
 const missing = REQUIRED_ENV.filter((key) => !hasEnv(key));
@@ -40,9 +47,15 @@ app.get("/health", (req, res) => res.status(200).send("OK"));
 
 // Env check: confirms required keys are set (no values exposed)
 app.get("/api/env-check", (req, res) => {
-  const status = Object.fromEntries(REQUIRED_ENV.map((key) => [key, hasEnv(key)]));
-  const allSet = REQUIRED_ENV.every((key) => status[key]);
-  res.json({ ok: allSet, keys: status });
+  const required = Object.fromEntries(REQUIRED_ENV.map((key) => [key, hasEnv(key)]));
+  const optional = Object.fromEntries(OPTIONAL_ENV.map((key) => [key, hasEnv(key)]));
+  const allRequired = REQUIRED_ENV.every((key) => required[key]);
+  res.json({
+    ok: allRequired,
+    required,
+    optional,
+    sheetsConfigured: OPTIONAL_ENV.every((key) => optional[key]),
+  });
 });
 
 // Optional SMTP connectivity check for debugging.
