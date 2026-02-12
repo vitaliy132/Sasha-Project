@@ -1,4 +1,3 @@
-// Main application entry point
 require("dotenv").config();
 const express = require("express");
 const helmet = require("helmet");
@@ -9,9 +8,7 @@ const logger = require("./utils/logger");
 const { verifySmtp } = require("./services/mailer");
 const app = express();
 
-// All env vars required for the app to start.
 const REQUIRED_ENV = ["WEBHOOK_SECRET", "SMTP_HOST", "SMTP_USER", "SMTP_PASS", "CRM_EMAIL"];
-// Google Sheets is optional - only required if you want to log to sheets
 const OPTIONAL_ENV = [
   "GOOGLE_SHEET_ID",
   "GOOGLE_PROJECT_ID",
@@ -31,7 +28,6 @@ app.use(cors());
 app.use(morgan("combined"));
 app.use(express.json());
 
-// Root: so visiting the site in a browser doesn't error
 app.get("/", (req, res) => {
   res.json({
     name: "sasha-project",
@@ -45,7 +41,6 @@ app.get("/", (req, res) => {
 
 app.get("/health", (req, res) => res.status(200).send("OK"));
 
-// Env check: confirms required keys are set (no values exposed)
 app.get("/api/env-check", (req, res) => {
   const required = Object.fromEntries(REQUIRED_ENV.map((key) => [key, hasEnv(key)]));
   const optional = Object.fromEntries(OPTIONAL_ENV.map((key) => [key, hasEnv(key)]));
@@ -58,8 +53,6 @@ app.get("/api/env-check", (req, res) => {
   });
 });
 
-// Optional SMTP connectivity check for debugging.
-// Enable with ENABLE_SMTP_DEBUG=1 (to avoid exposing details accidentally).
 app.get("/api/smtp-check", async (req, res) => {
   if (process.env.ENABLE_SMTP_DEBUG !== "1") {
     return res.status(404).json({ error: "Not found" });
@@ -80,7 +73,6 @@ app.get("/api/smtp-check", async (req, res) => {
 
 app.use("/api/leads", require("./routes/leads"));
 
-// 404
 app.use((req, res) => {
   res.status(404).json({ error: "Not found", path: req.path });
 });

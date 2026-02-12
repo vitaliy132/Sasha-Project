@@ -1,6 +1,5 @@
-// Formatter service
-// Output is Label: Information format; colon is the delimiter. Omit lines when data is not available.
-const line = (label, value) => (value != null && String(value).trim() !== "" ? `${label}: ${String(value).trim()}` : null);
+const line = (label, value) =>
+  value != null && String(value).trim() !== "" ? `${label}: ${String(value).trim()}` : null;
 
 exports.formatLeadEmail = (lead) => {
   const lines = [

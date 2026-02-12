@@ -1,4 +1,3 @@
-// Logger utility
 const log = (level, ...args) => {
   const timestamp = new Date().toISOString();
   const prefix = `[${timestamp}] [${level}]`;

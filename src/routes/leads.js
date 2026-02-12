@@ -1,4 +1,3 @@
-// Lead routes
 const express = require("express");
 const router = express.Router();
 
@@ -8,10 +7,7 @@ const { formatLeadEmail } = require("../services/formatter");
 const { appendLeadToSheet, checkLeadExists, markLeadAsSentToCRM } = require("../services/sheets");
 const logger = require("../utils/logger");
 
-// Constants
 const isAuthorized = (providedSecret) => providedSecret === process.env.WEBHOOK_SECRET;
-
-// Test lead template
 const buildTestLead = () => ({
   first_name: "Test",
   last_name: "Lead",
@@ -20,9 +16,6 @@ const buildTestLead = () => ({
   platform: "manual-test",
 });
 
-/**
- * Send test email with standardized response handling
- */
 const sendTestEmailResponse = async (res, { successText, failureText, logPrefix }) => {
   try {
     await sendLeadEmail("123", buildTestLead());
@@ -34,10 +27,6 @@ const sendTestEmailResponse = async (res, { successText, failureText, logPrefix 
   }
 };
 
-/**
- * Normalize ManyChat payload to internal lead format
- * Handles multiple phone field variations
- */
 const normalizeLeadPayload = (payload) => {
   const phone = payload.phone || payload.cell_phone || payload.home_phone || "";
 
@@ -53,11 +42,7 @@ const normalizeLeadPayload = (payload) => {
   };
 };
 
-/**
- * Process and validate lead
- */
 const processLead = async (normalized) => {
-  // Check for duplicate lead by email
   const existingLead = await checkLeadExists(normalized.email);
   if (existingLead) {
     const wasAlreadySent = existingLead.get("sent_to_crm") === "yes";
@@ -77,7 +62,6 @@ const processLead = async (normalized) => {
   const { error, value } = schema.validate(normalized);
   const isValid = !error;
 
-  // Always log to Google Sheets
   try {
     const appended = await appendLeadToSheet(normalized, isValid);
     if (!appended) {
@@ -106,12 +90,9 @@ const processLead = async (normalized) => {
     };
   }
 
-  // Send to CRM if valid
   try {
     const emailBody = formatLeadEmail(value);
     await sendLeadEmail(emailBody, value);
-
-    // Mark as sent to CRM after successful send
     await markLeadAsSentToCRM(normalized.email);
   } catch (emailErr) {
     logger.error("Failed to send lead email:", emailErr.message || emailErr);
@@ -134,8 +115,6 @@ const processLead = async (normalized) => {
     },
   };
 };
-
-// Routes
 
 router.get("/manychat", (req, res) => {
   return res.status(200).json({
@@ -171,12 +150,10 @@ router.get("/test", async (req, res) => {
 
 router.post("/manychat", async (req, res) => {
   try {
-    // Verify webhook secret
     if (!isAuthorized(req.headers["x-webhook-secret"])) {
       return res.status(401).send("Unauthorized");
     }
 
-    // Normalize and process lead
     const normalized = normalizeLeadPayload(req.body || {});
     const result = await processLead(normalized);
 

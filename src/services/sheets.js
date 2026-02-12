@@ -1,5 +1,3 @@
-// Google Sheets service
-// Appends validated and unvalidated leads to Google Sheets
 const { GoogleAuth } = require("google-auth-library");
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const logger = require("../utils/logger");
@@ -14,17 +12,11 @@ const REQUIRED_SHEET_ENV = [
 const hasEnv = (key) => !!process.env[key]?.trim();
 const checkSheetEnv = () => REQUIRED_SHEET_ENV.every((key) => hasEnv(key));
 
-/**
- * Parse private key - handle escaped newlines from .env
- */
 const parsePrivateKey = (key) => {
   if (!key) return key;
   return key.replace(/\\n/g, "\n");
 };
 
-/**
- * Create Google Auth instance with service account credentials
- */
 const createAuth = () => {
   return new GoogleAuth({
     projectId: process.env.GOOGLE_PROJECT_ID,
@@ -43,9 +35,6 @@ const createAuth = () => {
   });
 };
 
-/**
- * Format lead data for sheet row
- */
 const formatLeadRow = (lead, isValid) => ({
   first_name: lead.first_name || "",
   last_name: lead.last_name || "",
@@ -55,11 +44,6 @@ const formatLeadRow = (lead, isValid) => ({
   sent_to_crm: "no",
 });
 
-/**
- * Check if lead already exists in sheet by email
- * @param {string} email - Lead email
- * @returns {Promise<Object|null>} - Existing row or null
- */
 exports.checkLeadExists = async (email) => {
   if (!checkSheetEnv()) {
     return null;
@@ -80,10 +64,6 @@ exports.checkLeadExists = async (email) => {
   }
 };
 
-/**
- * Mark lead as sent to CRM in sheet
- * @param {string} email - Lead email
- */
 exports.markLeadAsSentToCRM = async (email) => {
   if (!checkSheetEnv()) {
     return;
@@ -108,12 +88,6 @@ exports.markLeadAsSentToCRM = async (email) => {
   }
 };
 
-/**
- * Append lead to Google Sheets with validation status
- * @param {Object} lead - Lead data object
- * @param {boolean} isValid - Whether lead passed validation
- * @returns {Promise<boolean>} - true if appended, false if duplicate
- */
 exports.appendLeadToSheet = async (lead, isValid) => {
   if (!checkSheetEnv()) {
     logger.warn("Google Sheets env vars not configured, skipping sheet append");
@@ -121,7 +95,6 @@ exports.appendLeadToSheet = async (lead, isValid) => {
   }
 
   try {
-    // Check for duplicate by email
     const existingLead = await exports.checkLeadExists(lead.email);
     if (existingLead) {
       logger.warn(`Duplicate lead detected, skipping append: ${lead.email}`);
@@ -135,7 +108,6 @@ exports.appendLeadToSheet = async (lead, isValid) => {
     const sheet = doc.sheetsByIndex[0];
 
     await sheet.addRow(formatLeadRow(lead, isValid));
-
     logger.info(
       `Lead appended to sheet (validated: ${isValid ? "yes" : "no"}): ${lead.first_name} ${lead.last_name}`,
     );
@@ -146,7 +118,4 @@ exports.appendLeadToSheet = async (lead, isValid) => {
   }
 };
 
-/**
- * Check if Google Sheets is properly configured
- */
 exports.isSheetConfigured = () => checkSheetEnv();
