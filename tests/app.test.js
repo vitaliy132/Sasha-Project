@@ -70,8 +70,80 @@ describe("API", () => {
       assert.strictEqual(res.status, 200);
       const body = await res.json();
       assert.strictEqual(body.ok, true);
-      assert.ok(body.keys.WEBHOOK_SECRET === true);
-      assert.ok(body.keys.CRM_EMAIL === true);
+      assert.ok(body.required.WEBHOOK_SECRET === true);
+      assert.ok(body.required.CRM_EMAIL === true);
+    });
+  });
+
+  describe("POST /calculate-rental", () => {
+    it("returns a full quote breakdown", async () => {
+      const res = await fetch(baseUrl + "/calculate-rental", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          startDate: "2026-01-01",
+          endDate: "2026-01-05",
+          vehicleType: "classC",
+          cdwPlus: true,
+          kmPackages: 1,
+          generatorHours: 2,
+          extraKm: 10,
+        }),
+      });
+
+      assert.strictEqual(res.status, 200);
+      const body = await res.json();
+      assert.strictEqual(body.total, 1382.1);
+      assert.strictEqual(body.totalFormatted, "$1382.10");
+      assert.ok(body.summaryMessage.includes("Your estimated total for this rental is $1382.10."));
+      assert.ok(body.summaryMessage.includes("A $3000 security deposit is required."));
+      assert.strictEqual(body.breakdown.days, 5);
+      assert.strictEqual(body.breakdown.dailyRateTotal, 500);
+      assert.strictEqual(body.breakdown.cdw, 210);
+      assert.strictEqual(body.breakdown.prepFee, 149);
+      assert.strictEqual(body.breakdown.kmPackages, 350);
+      assert.strictEqual(body.breakdown.hitch, 0);
+      assert.strictEqual(body.breakdown.extraKm, 4.1);
+      assert.strictEqual(body.breakdown.generator, 10);
+      assert.strictEqual(body.breakdown.tax, 159);
+      assert.strictEqual(body.lineItems.length, 8);
+      assert.strictEqual(body.lineItems[0].name, "Daily Rental");
+    });
+
+    it("rejects rentals shorter than 5 days", async () => {
+      const res = await fetch(baseUrl + "/calculate-rental", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          startDate: "2026-07-01",
+          endDate: "2026-07-03",
+          vehicleType: "classA",
+          cdwPlus: false,
+          kmPackages: 0,
+        }),
+      });
+
+      assert.strictEqual(res.status, 400);
+      const body = await res.json();
+      assert.strictEqual(body.error, "Rental must be at least 5 days");
+    });
+
+    it("includes trailer towing requirements message", async () => {
+      const res = await fetch(baseUrl + "/calculate-rental", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          startDate: "2026-06-01",
+          endDate: "2026-06-05",
+          vehicleType: "trailer",
+          cdwPlus: false,
+          kmPackages: 0,
+        }),
+      });
+
+      assert.strictEqual(res.status, 200);
+      const body = await res.json();
+      assert.ok(body.summaryMessage.includes("Please note: You must have a properly rated tow vehicle"));
     });
   });
 
@@ -130,7 +202,13 @@ describe("API", () => {
         body: JSON.stringify({ first_name: "J" }),
       });
       assert.strictEqual(res.status, 400);
-      assert.strictEqual(await res.text(), "Invalid lead data");
+      const body = await res.json();
+      assert.strictEqual(
+        body.message,
+        "Lead data incomplete or invalid. Appended to sheets with validated: no"
+      );
+      assert.ok(Array.isArray(body.errors));
+      assert.ok(body.errors.length > 0);
     });
 
     it("returns 400 for invalid email", async () => {
