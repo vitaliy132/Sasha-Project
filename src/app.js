@@ -34,6 +34,7 @@ app.get("/", (req, res) => {
     status: "ok",
     message: "Lead webhook API. Use POST /api/leads/manychat with x-webhook-secret.",
     rentalQuote: "POST /calculate-rental",
+    calculatorLead: "POST /submit-lead",
     health: "/health",
     envCheck: "/api/env-check",
     smtpCheck: "/api/smtp-check",
@@ -74,6 +75,7 @@ app.get("/api/smtp-check", async (req, res) => {
 
 app.use("/api/leads", require("./routes/leads"));
 app.use("/calculate-rental", require("./routes/rental"));
+app.use("/submit-lead", require("./routes/submitLead"));
 
 app.use((req, res) => {
   res.status(404).json({ error: "Not found", path: req.path });

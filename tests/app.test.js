@@ -157,6 +157,38 @@ describe("API", () => {
     });
   });
 
+  describe("POST /submit-lead", () => {
+    it("returns 400 for short name", async () => {
+      const res = await fetch(baseUrl + "/submit-lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "J",
+          email: "jane@example.com",
+          phone: "1234567890",
+          quote: "$100",
+        }),
+      });
+      assert.strictEqual(res.status, 400);
+      const body = await res.json();
+      assert.ok(body.message);
+    });
+
+    it("returns 400 for invalid email", async () => {
+      const res = await fetch(baseUrl + "/submit-lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Jane Doe",
+          email: "not-email",
+          phone: "1234567890",
+          quote: "$100",
+        }),
+      });
+      assert.strictEqual(res.status, 400);
+    });
+  });
+
   describe("POST /api/leads/manychat", () => {
     it("returns 401 without x-webhook-secret", async () => {
       const res = await fetch(baseUrl + "/api/leads/manychat", {
@@ -258,6 +290,19 @@ describe("Lead schema", () => {
 });
 
 describe("Formatter", () => {
+  it("uses rental calculator title for that platform", () => {
+    const lead = {
+      first_name: "Jane",
+      last_name: "Doe",
+      email: "jane@example.com",
+      phone: "1234567890",
+      platform: "rental-calculator",
+      notes: "Quote: $100",
+    };
+    const body = formatLeadEmail(lead);
+    assert.ok(body.startsWith("New Lead from Rental Calculator"));
+  });
+
   it("formats lead email with required fields", () => {
     const lead = {
       first_name: "Jane",

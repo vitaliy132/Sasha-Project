@@ -1,10 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const schema = require("../validators/lead.schema");
-const { sendLeadEmail } = require("../services/mailer");
-const { formatLeadEmail } = require("../services/formatter");
-const { appendLeadToSheet, checkLeadExists, markLeadAsSentToCRM } = require("../services/sheets");
+const { processLead } = require("../services/leadProcessor");
 const logger = require("../utils/logger");
 
 const isAuthorized = (providedSecret) => providedSecret === process.env.WEBHOOK_SECRET;
@@ -39,80 +36,6 @@ const normalizeLeadPayload = (payload) => {
     ...(payload.notes && { notes: payload.notes }),
     ...(payload.platform && { platform: payload.platform }),
     ...(payload.campaign && { campaign: payload.campaign }),
-  };
-};
-
-const processLead = async (normalized) => {
-  const existingLead = await checkLeadExists(normalized.email);
-  if (existingLead) {
-    const wasAlreadySent = existingLead.get("sent_to_crm") === "yes";
-    return {
-      success: false,
-      statusCode: 409,
-      data: {
-        message: wasAlreadySent
-          ? "Lead already sent to CRM (duplicate)"
-          : "Lead already exists in system (may have failed validation)",
-        validated: existingLead.get("validated"),
-        duplicate: true,
-      },
-    };
-  }
-
-  const { error, value } = schema.validate(normalized);
-  const isValid = !error;
-
-  try {
-    const appended = await appendLeadToSheet(normalized, isValid);
-    if (!appended) {
-      // Duplicate detected during append (race condition)
-      return {
-        success: false,
-        statusCode: 409,
-        data: {
-          message: "Lead already exists in sheet (duplicate)",
-          duplicate: true,
-        },
-      };
-    }
-  } catch (sheetErr) {
-    logger.error("Failed to append to Google Sheets:", sheetErr.message || sheetErr);
-  }
-
-  if (!isValid) {
-    return {
-      success: false,
-      statusCode: 400,
-      data: {
-        message: "Lead data incomplete or invalid. Appended to sheets with validated: no",
-        errors: error.details,
-      },
-    };
-  }
-
-  try {
-    const emailBody = formatLeadEmail(value);
-    await sendLeadEmail(emailBody, value);
-    await markLeadAsSentToCRM(normalized.email);
-  } catch (emailErr) {
-    logger.error("Failed to send lead email:", emailErr.message || emailErr);
-    return {
-      success: false,
-      statusCode: 500,
-      data: {
-        error: "Server error",
-        message: "Lead validated but email delivery failed",
-      },
-    };
-  }
-
-  return {
-    success: true,
-    statusCode: 200,
-    data: {
-      message: "Lead accepted and sent to CRM",
-      validated: true,
-    },
   };
 };
 
