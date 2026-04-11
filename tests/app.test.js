@@ -52,8 +52,8 @@ describe("API", () => {
       assert.strictEqual(res.status, 200);
       const body = await res.json();
       assert.strictEqual(body.status, "ok");
-      assert.ok(body.health);
-      assert.ok(body.envCheck);
+      assert.ok(body.activeEndpoints);
+      assert.ok(body.debugEndpoints);
     });
   });
 

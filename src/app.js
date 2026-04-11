@@ -33,13 +33,20 @@ app.get("/", (req, res) => {
   res.json({
     name: "sasha-project",
     status: "ok",
-    message: "Lead webhook API. Use POST /api/leads/manychat with x-webhook-secret.",
-    pricingCalculator: "POST /calculate",
-    rentalQuote: "POST /calculate-rental",
-    calculatorLead: "POST /submit-lead",
-    health: "/health",
-    envCheck: "/api/env-check",
-    smtpCheck: "/api/smtp-check",
+    message: "Lead webhook API for rental calculator",
+    activeEndpoints: {
+      rentalQuote: "POST /calculate-rental (used by FrontEndSasha)",
+      calculatorLead: "POST /submit-lead (used by FrontEndSasha)",
+      manychatWebhook: "POST /api/leads/manychat",
+    },
+    debugEndpoints: {
+      health: "GET /health",
+      envCheck: "GET /api/env-check",
+      smtpCheck: "GET /api/smtp-check (requires ENABLE_SMTP_DEBUG=1)",
+    },
+    deprecatedEndpoints: {
+      pricingCalculator: "POST /calculate (deprecated - use /calculate-rental instead)",
+    },
   });
 });
 
@@ -76,7 +83,8 @@ app.get("/api/smtp-check", async (req, res) => {
 });
 
 app.use("/api/leads", require("./routes/leads"));
-app.use("/calculate", require("./routes/pricing"));
+// DEPRECATED: /calculate endpoint replaced by /calculate-rental
+// app.use("/calculate", require("./routes/pricing"));
 app.use("/calculate-rental", require("./routes/rental"));
 app.use("/submit-lead", require("./routes/submitLead"));
 
