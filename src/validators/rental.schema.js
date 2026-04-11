@@ -20,6 +20,9 @@ module.exports = Joi.object({
   kmPackages: Joi.number().integer().min(0).required(),
   generatorHours: Joi.number().min(0).optional().default(0),
   extraKm: Joi.number().min(0).optional().default(0),
+  kitchenKit: Joi.boolean().optional().default(false),
+  beddingKitPeople: Joi.number().integer().min(0).optional().default(0),
+  bikeRack: Joi.boolean().optional().default(false),
 })
   .custom((value, helpers) => {
     const start = parseISO(value.startDate);

@@ -31,6 +31,36 @@
       "21_2023": { "PREMIUM": 199, "PRIME": 149, "SHOULDER": 99, "ECONOMY": 94 }
     }
   },
+  "ADD_ONS": {
+    "generator": {
+      "hourly": 5,
+      "daily": 60
+    },
+    "windshieldCoverage": {
+      "classA": {
+        "perTrip": 35,
+        "min": 250,
+        "max": 1000
+      },
+      "classC": {
+        "perTrip": 20,
+        "max": 450
+      }
+    },
+    "cancellationWaiver": {
+      "daily": 20,
+      "min": 240
+    },
+    "kitchenKit": {
+      "perTrip": 85
+    },
+    "beddingKit": {
+      "perPerson": 35
+    },
+    "bikeRack": {
+      "perTrip": 0
+    }
+  },
   "defaults": {
     "vehicleModelByType": {
       "classA": "25_slide_2021_2023",

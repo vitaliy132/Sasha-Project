@@ -34,6 +34,7 @@ app.get("/", (req, res) => {
     name: "sasha-project",
     status: "ok",
     message: "Lead webhook API. Use POST /api/leads/manychat with x-webhook-secret.",
+    pricingCalculator: "POST /calculate",
     rentalQuote: "POST /calculate-rental",
     calculatorLead: "POST /submit-lead",
     health: "/health",
@@ -75,6 +76,7 @@ app.get("/api/smtp-check", async (req, res) => {
 });
 
 app.use("/api/leads", require("./routes/leads"));
+app.use("/calculate", require("./routes/pricing"));
 app.use("/calculate-rental", require("./routes/rental"));
 app.use("/submit-lead", require("./routes/submitLead"));
 
