@@ -20,9 +20,31 @@ router.post("/", asyncHandler(async (req, res) => {
     });
   }
 
-  const quote = calculateRentalQuote(value);
-  logger.info("Rental quote result", quote);
-  return res.json(quote);
+  try {
+    const quote = calculateRentalQuote(value);
+    
+    if (!quote) {
+      logger.error("calculateRentalQuote returned undefined or null", { input: value });
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        error: "Calculation failed",
+        message: "Unable to calculate rental quote",
+      });
+    }
+    
+    logger.info("Rental quote result", quote);
+    return res.status(HTTP_STATUS.OK).json(quote);
+  } catch (err) {
+    logger.error("Rental quote calculation error", {
+      error: err.message || err,
+      statusCode: err.statusCode,
+    });
+    
+    const statusCode = err.statusCode || HTTP_STATUS.BAD_REQUEST;
+    return res.status(statusCode).json({
+      error: "Calculation failed",
+      message: err.message || "Unable to calculate rental quote",
+    });
+  }
 }));
 
 module.exports = router;
