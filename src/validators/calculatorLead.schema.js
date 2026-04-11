@@ -5,5 +5,8 @@ module.exports = Joi.object({
   name: Joi.string().trim().min(2).required(),
   email: Joi.string().email().required(),
   phone: Joi.string().trim().min(6).required(),
-  quote: Joi.string().trim().allow("").optional().default(""),
+  quote: Joi.string().trim().min(4).required().messages({
+    "string.empty": "Quote is required",
+    "string.min": "Quote must be a valid currency amount",
+  }),
 });

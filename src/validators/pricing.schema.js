@@ -12,12 +12,19 @@ const isIsoDate = (value, helpers) => {
 module.exports = Joi.object({
   unitId: Joi.string().optional(),
   unitType: Joi.string()
-    .valid("class_a", "class_b", "class_c", "trailer")
+    .valid("classA", "classB", "classC", "trailer")
     .required()
     .messages({
-      "any.only": "unitType must be one of: class_a, class_b, class_c, trailer",
+      "any.only": "unitType must be one of: classA, classB, classC, trailer",
+    }),
+  vehicleType: Joi.string()
+    .valid("classA", "classB", "classC", "trailer")
+    .optional()
+    .messages({
+      "any.only": "vehicleType must be one of: classA, classB, classC, trailer",
     }),
   unitModel: Joi.string().trim().min(1).required(),
+  vehicleModel: Joi.string().trim().min(1).optional(),
   startDate: Joi.string().required().custom(isIsoDate, "ISO date validation").messages({
     "date.invalid": "startDate must be a valid ISO date string",
   }),
