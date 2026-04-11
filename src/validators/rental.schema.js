@@ -12,8 +12,12 @@ const isIsoDate = (value, helpers) => {
 module.exports = Joi.object({
   startDate: Joi.string().required().custom(isIsoDate, "ISO date validation"),
   endDate: Joi.string().required().custom(isIsoDate, "ISO date validation"),
-  vehicleType: Joi.string().valid("classA", "classC", "trailer").required(),
+  vehicleType: Joi.string().valid("classA", "classB", "classC", "trailer").required(),
+  vehicleModel: Joi.string().trim().min(1).required(),
   cdwPlus: Joi.boolean().required(),
+  cancellationWaiver: Joi.boolean().optional().default(false),
+  windshieldCoverage: Joi.boolean().optional().default(false),
+  generatorDailyUnlimited: Joi.boolean().optional().default(false),
   kmPackages: Joi.number().integer().min(0).required(),
   generatorHours: Joi.number().min(0).optional().default(0),
   extraKm: Joi.number().min(0).optional().default(0),

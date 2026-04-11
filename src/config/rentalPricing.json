@@ -1,0 +1,42 @@
+{
+  "SEASONS": {
+    "PREMIUM": { "start": "07-01", "end": "08-31" },
+    "PRIME": [
+      { "start": "06-11", "end": "06-30" },
+      { "start": "09-01", "end": "09-30" }
+    ],
+    "SHOULDER": [
+      { "start": "05-15", "end": "06-10" },
+      { "start": "10-01", "end": "10-25" }
+    ],
+    "ECONOMY": [
+      { "start": "10-26", "end": "12-31" },
+      { "start": "01-01", "end": "05-14" }
+    ]
+  },
+  "PRICING": {
+    "classA": {
+      "30_slide_2024": { "PREMIUM": 289, "PRIME": 234, "SHOULDER": 154, "ECONOMY": 119 },
+      "32_bunks_2017": { "PREMIUM": 289, "PRIME": 234, "SHOULDER": 154, "ECONOMY": 119 },
+      "25_slide_2021_2023": { "PREMIUM": 244, "PRIME": 189, "SHOULDER": 119, "ECONOMY": 94 }
+    },
+    "classB": {
+      "mercedes_2021_2023": { "PREMIUM": 244, "PRIME": 189, "SHOULDER": 119, "ECONOMY": 94 }
+    },
+    "classC": {
+      "mercedes_2021_2023": { "PREMIUM": 244, "PRIME": 189, "SHOULDER": 119, "ECONOMY": 94 }
+    },
+    "trailer": {
+      "19_2023": { "PREMIUM": 174, "PRIME": 134, "SHOULDER": 89, "ECONOMY": 84 },
+      "21_2023": { "PREMIUM": 199, "PRIME": 149, "SHOULDER": 99, "ECONOMY": 94 }
+    }
+  },
+  "defaults": {
+    "vehicleModelByType": {
+      "classA": "25_slide_2021_2023",
+      "classB": "mercedes_2021_2023",
+      "classC": "mercedes_2021_2023",
+      "trailer": "19_2023"
+    }
+  }
+}

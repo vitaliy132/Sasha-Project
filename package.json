@@ -5,7 +5,7 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node app.js",
-    "test": "node --test tests/app.test.js",
+    "test": "node --test tests/app.test.js tests/rentalPricing.engine.test.js",
     "rental:validate": "node -e \"require('./src/services/rentalQuote').runRentalQuoteValidationTests()\"",
     "test:live": "node tests/live-check.js"
   },

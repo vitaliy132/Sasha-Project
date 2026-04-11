@@ -85,6 +85,7 @@ describe("API", () => {
           startDate: "2026-01-01",
           endDate: "2026-01-05",
           vehicleType: "classC",
+          vehicleModel: "mercedes_2021_2023",
           cdwPlus: true,
           kmPackages: 1,
           generatorHours: 2,
@@ -94,22 +95,22 @@ describe("API", () => {
 
       assert.strictEqual(res.status, 200);
       const body = await res.json();
-      assert.strictEqual(body.total, 1382.1);
-      assert.strictEqual(body.totalFormatted, "$1382.10");
-      assert.ok(body.summaryMessage.includes("Your estimated total for this rental is $1382.10."));
+      assert.strictEqual(body.total, 1348.2);
+      assert.strictEqual(body.totalFormatted, "$1348.20");
+      assert.ok(body.summaryMessage.includes("Your estimated total for this rental is $1348.20."));
       assert.ok(body.summaryMessage.includes("A $3000 security deposit is required."));
       assert.strictEqual(body.breakdown.days, 5);
-      assert.strictEqual(body.breakdown.dailyRateTotal, 500);
+      assert.strictEqual(body.breakdown.dailyRateTotal, 470);
       assert.strictEqual(body.breakdown.cdw, 210);
       assert.strictEqual(body.breakdown.prepFee, 149);
-      assert.strictEqual(body.breakdown.kmCost, 350);
-      assert.strictEqual(body.breakdown.hitchCost, 0);
-      assert.strictEqual(body.breakdown.extraKmCost, 4.1);
-      assert.strictEqual(body.breakdown.generatorCost, 10);
-      assert.strictEqual(body.breakdown.totalBeforeTax, 1223.1);
-      assert.strictEqual(body.breakdown.tax, 159);
-      assert.strictEqual(body.breakdown.total, 1382.1);
-      assert.strictEqual(body.lineItems.length, 8);
+      assert.strictEqual(body.breakdown.kmPackages, 350);
+      assert.strictEqual(body.breakdown.hitch, 0);
+      assert.strictEqual(body.breakdown.extraKm, 4.1);
+      assert.strictEqual(body.breakdown.generator, 10);
+      assert.strictEqual(body.breakdown.cancellationWaiver, 0);
+      assert.strictEqual(body.breakdown.windshield, 0);
+      assert.strictEqual(body.breakdown.tax, 155.1);
+      assert.strictEqual(body.lineItems.length, 10);
       assert.strictEqual(body.lineItems[0].name, "Daily Rental");
     });
 
@@ -121,6 +122,7 @@ describe("API", () => {
           startDate: "2026-07-01",
           endDate: "2026-07-03",
           vehicleType: "classA",
+          vehicleModel: "30_slide_2024",
           cdwPlus: true,
           kmPackages: 0,
           extraKm: 0,
@@ -131,10 +133,25 @@ describe("API", () => {
       assert.strictEqual(res.status, 200);
       const body = await res.json();
       assert.strictEqual(body.breakdown.days, 3);
-      assert.strictEqual(body.breakdown.dailyRateTotal, 1000);
+      assert.strictEqual(body.breakdown.dailyRateTotal, 289 * 5);
       assert.strictEqual(body.breakdown.cdw, 210);
       assert.strictEqual(body.breakdown.prepFee, 199);
       assert.ok(body.summaryMessage.includes("minimum of 5 days"));
+    });
+
+    it("returns 400 when vehicleModel is missing", async () => {
+      const res = await fetch(baseUrl + "/calculate-rental", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          startDate: "2026-01-01",
+          endDate: "2026-01-05",
+          vehicleType: "classC",
+          cdwPlus: false,
+          kmPackages: 0,
+        }),
+      });
+      assert.strictEqual(res.status, 400);
     });
 
     it("includes trailer towing requirements message", async () => {
@@ -145,6 +162,7 @@ describe("API", () => {
           startDate: "2026-06-01",
           endDate: "2026-06-05",
           vehicleType: "trailer",
+          vehicleModel: "19_2023",
           cdwPlus: false,
           kmPackages: 0,
         }),
@@ -153,7 +171,8 @@ describe("API", () => {
       assert.strictEqual(res.status, 200);
       const body = await res.json();
       assert.ok(body.summaryMessage.includes("Please note: You must have a properly rated tow vehicle"));
-      assert.strictEqual(body.breakdown.hitchCost, 150);
+      assert.strictEqual(body.breakdown.hitch, 150);
+      assert.strictEqual(body.breakdown.dailyRateTotal, 89 * 5);
     });
   });
 
