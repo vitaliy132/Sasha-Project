@@ -52,16 +52,14 @@
         "max": 450
       }
     },
-    "insurance": {
-      "vipCollisionDamageWaiver": {
-        "daily": 30,
-        "description": "VIP Collision Damage Waiver"
-      },
-      "cancellationWaiver": {
-        "daily": 20,
-        "min": 240,
-        "description": "Cancellation Waiver"
-      }
+    "cancellationWaiver": {
+      "daily": 20,
+      "min": 240,
+      "description": "Cancellation Waiver"
+    },
+    "vipCollisionDamageWaiver": {
+      "daily": 30,
+      "description": "VIP Collision Damage Waiver"
     },
     "kitchenKit": {
       "perTrip": 85

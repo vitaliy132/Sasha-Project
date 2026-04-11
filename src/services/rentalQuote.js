@@ -360,7 +360,7 @@ function runRentalQuoteValidationTests(options = {}) {
   };
 
   const base = (over) => ({
-    vehicleModel: "mercedes_2021_2023",
+    vehicleModel: "23ft_2020_2026",
     kmPackages: 0,
     extraKm: 0,
     generatorHours: 0,
@@ -403,7 +403,7 @@ function runRentalQuoteValidationTests(options = {}) {
       startDate: "2026-06-15",
       endDate: "2026-06-19",
       vehicleType: "trailer",
-      vehicleModel: "19_2023",
+      vehicleModel: "19ft_2023",
       kmPackages: 0,
       extraKm: 0,
       generatorHours: 0,

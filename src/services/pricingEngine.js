@@ -4,6 +4,8 @@ const pricingConfig = require("../config/rentalPricing.json");
 const TAX_RATE = 0.13;
 const TRAILER_HITCH_FEE = 150;
 const MINIMUM_RENTAL_DAYS = 5;
+const CDW_DAILY_RATE = 30;
+const CDW_MINIMUM = 210;
 
 // PREP FEES by unit type
 const PREP_FEES = {
@@ -145,7 +147,16 @@ function calculateBasePriceWithBreakdown(startDate, numDays, unitPricing) {
 }
 
 /**
- * Calculate VIP Collision Damage Waiver: $30 per day
+ * Calculate mandatory CDW: max(30 × days, 210)
+ * @param {number} numDays
+ * @returns {number}
+ */
+function calculateCDW(numDays) {
+  return roundToTwo(Math.max(numDays * CDW_DAILY_RATE, CDW_MINIMUM));
+}
+
+/**
+ * Calculate optional VIP Collision Damage Waiver: $30 per day
  * @param {number} numDays
  * @param {boolean} enabled
  * @returns {number}
@@ -321,14 +332,12 @@ function calculatePrice(params) {
   const unitPricing = validateUnit(unitType, unitModel);
 
   // === CALCULATE DAYS ===
-  const days = differenceInCalendarDays(end, start) + 1;
+  let days = differenceInCalendarDays(end, start) + 1;
 
-  // === VALIDATE MINIMUM DAYS ===
-  if (days < MINIMUM_RENTAL_DAYS) {
-    throw new Error(
-      `Minimum rental duration is ${MINIMUM_RENTAL_DAYS} days. Requested: ${days} days`
-    );
-  }
+  // === ENFORCE MINIMUM 5 DAYS ===
+  // If rental is less than 5 days, charge for 5 days
+  const actualDays = days;
+  days = Math.max(days, MINIMUM_RENTAL_DAYS);
 
   // === CALCULATE COMPONENTS ===
   // 1. Base price per day by season
@@ -338,30 +347,33 @@ function calculatePrice(params) {
     unitPricing
   );
 
-  // 2. Preparation fee
+  // 2. Mandatory CDW: max(30 × days, 210)
+  const cdw = calculateCDW(days);
+
+  // 3. Preparation fee
   const preparationFee = getPreparationFee(unitType);
 
-  // 3. Mileage cost (optional)
+  // 4. Mileage cost (optional)
   const mileageCost = calculateMileageCost(mileage, days);
 
-  // 4. VIP Collision Damage Waiver (optional)
+  // 5. Optional VIP Collision Damage Waiver
   const vipCDW = calculateVIPCollisionDamageWaiver(days, vipCollisionDamageWaiver);
 
-  // 5. Cancellation Waiver (optional)
+  // 6. Cancellation Waiver (optional)
   const cancellation = calculateCancellationWaiver(days, cancellationWaiver);
 
-  // 6. Windshield Coverage (optional)
+  // 7. Windshield Coverage (optional)
   const windshield = calculateWindshieldCoverage(unitType, days, windshieldCoverage);
 
-  // 7. Generator (optional)
+  // 8. Generator (optional)
   const generatorCost = calculateGenerator(generator, days);
 
-  // 8. Trailer hitch fee (only for trailers)
+  // 9. Trailer hitch fee (only for trailers)
   const hitchFee = calculateHitchFee(unitType);
 
   // === SUBTOTAL (before tax) ===
   const subtotal = roundToTwo(
-    basePrice + preparationFee + mileageCost + vipCDW + cancellation + windshield + generatorCost + hitchFee
+    basePrice + cdw + preparationFee + mileageCost + vipCDW + cancellation + windshield + generatorCost + hitchFee
   );
 
   // === TAX ===
@@ -385,15 +397,16 @@ function calculatePrice(params) {
 
     // Base and mandatory fees
     basePrice,
+    cdw: roundToTwo(cdw),
     preparationFee,
 
-    // Optional add-ons (only included if enabled)
-    ...(mileageCost > 0 && { mileageCost }),
-    ...(vipCDW > 0 && { vipCollisionDamageWaiver: vipCDW }),
-    ...(cancellation > 0 && { cancellationWaiver: cancellation }),
-    ...(windshield > 0 && { windshieldCoverage: windshield }),
-    ...(generatorCost > 0 && { generatorCost }),
-    ...(hitchFee > 0 && { hitchFee }),
+    // Optional add-ons (always shown for transparency)
+    mileageCost: roundToTwo(mileageCost),
+    vipCollisionDamageWaiver: roundToTwo(vipCDW),
+    cancellationWaiver: roundToTwo(cancellation),
+    windshieldCoverage: roundToTwo(windshield),
+    generatorCost: roundToTwo(generatorCost),
+    hitchFee: roundToTwo(hitchFee),
 
     // Totals
     subtotal,
@@ -414,6 +427,7 @@ module.exports = {
   roundToTwo,
   validateUnit,
   calculateBasePriceWithBreakdown,
+  calculateCDW,
   calculateVIPCollisionDamageWaiver,
   calculateCancellationWaiver,
   calculateWindshieldCoverage,
