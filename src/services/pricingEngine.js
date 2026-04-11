@@ -2,9 +2,8 @@ const { addDays, differenceInCalendarDays, format, isValid, parseISO } = require
 const pricingConfig = require("../config/rentalPricing.json");
 
 const TAX_RATE = 0.13;
-const CDW_DAILY_RATE = 30;
-const CDW_MINIMUM = 210;
 const TRAILER_HITCH_FEE = 150;
+const MINIMUM_RENTAL_DAYS = 5;
 
 // PREP FEES by unit type
 const PREP_FEES = {
@@ -121,8 +120,13 @@ function calculateBasePriceWithBreakdown(startDate, numDays, unitPricing) {
     const season = getSeason(day);
     const price = unitPricing[season];
 
+    // Handle null price (season not available for this vehicle)
+    if (price === null || price === undefined) {
+      throw new Error(`This vehicle is not available for ${season} season`);
+    }
+
     if (!Number.isFinite(Number(price))) {
-      throw new Error(`Missing price for season ${season}`);
+      throw new Error(`Invalid price for season ${season}`);
     }
 
     const priceNum = Number(price);
@@ -141,10 +145,86 @@ function calculateBasePriceWithBreakdown(startDate, numDays, unitPricing) {
 }
 
 /**
- * Calculate CDW: max(30 * days, 210)
+ * Calculate VIP Collision Damage Waiver: $30 per day
+ * @param {number} numDays
+ * @param {boolean} enabled
+ * @returns {number}
  */
-function calculateCDW(numDays) {
-  return roundToTwo(Math.max(numDays * CDW_DAILY_RATE, CDW_MINIMUM));
+function calculateVIPCollisionDamageWaiver(numDays, enabled) {
+  if (!enabled) return 0;
+  const dailyRate = 30;
+  return roundToTwo(numDays * dailyRate);
+}
+
+/**
+ * Calculate Cancellation Waiver: $20 per day with minimum $240
+ * @param {number} numDays
+ * @param {boolean} enabled
+ * @returns {number}
+ */
+function calculateCancellationWaiver(numDays, enabled) {
+  if (!enabled) return 0;
+  const dailyRate = 20;
+  const minimum = 240;
+  const total = numDays * dailyRate;
+  return roundToTwo(Math.max(total, minimum));
+}
+
+/**
+ * Calculate Windshield Coverage
+ * - CLASS A: $35 per trip, min $250, max $1000
+ * - CLASS C: $20 per trip, max $450
+ * @param {string} unitType - class_a, class_c, etc
+ * @param {number} numDays
+ * @param {boolean} enabled
+ * @returns {number}
+ */
+function calculateWindshieldCoverage(unitType, numDays, enabled) {
+  if (!enabled) return 0;
+
+  const { ADD_ONS } = pricingConfig;
+  const windshieldConfig = ADD_ONS.windshieldCoverage;
+
+  if (unitType === "class_a" && windshieldConfig.classA) {
+    const perTrip = windshieldConfig.classA.perTrip;
+    const cost = roundToTwo(perTrip * numDays);
+    const min = windshieldConfig.classA.min;
+    const max = windshieldConfig.classA.max;
+    return roundToTwo(Math.max(Math.min(cost, max), min));
+  } else if (unitType === "class_c" && windshieldConfig.classC) {
+    const perTrip = windshieldConfig.classC.perTrip;
+    const cost = roundToTwo(perTrip * numDays);
+    const max = windshieldConfig.classC.max;
+    return roundToTwo(Math.min(cost, max));
+  }
+
+  return 0;
+}
+
+/**
+ * Calculate Generator Usage
+ * - $5 per hour OR $60 per day (if unlimited)
+ * @param {object} generatorUsage - { type: "hourly" | "daily", value: number }
+ * @param {number} numDays - only used for reference
+ * @returns {number}
+ */
+function calculateGenerator(generatorUsage, numDays) {
+  if (!generatorUsage || !generatorUsage.type || generatorUsage.value === 0) {
+    return 0;
+  }
+
+  const value = Number(generatorUsage.value) || 0;
+  if (value < 0) return 0;
+
+  if (generatorUsage.type === "hourly") {
+    const hourlyRate = 5;
+    return roundToTwo(value * hourlyRate);
+  } else if (generatorUsage.type === "daily") {
+    const dailyRate = 60;
+    return roundToTwo(value * dailyRate);
+  }
+
+  return 0;
 }
 
 /**
@@ -197,11 +277,25 @@ function calculateHitchFee(unitType) {
 
 /**
  * Main pricing function
- * @param {object} params - { unitId, unitType, unitModel, startDate, endDate, mileage }
+ * @param {object} params - {
+ *   unitId, unitType, unitModel, startDate, endDate, mileage,
+ *   vipCollisionDamageWaiver, cancellationWaiver, windshieldCoverage, generator
+ * }
  * @returns {object} - detailed breakdown with all components
  */
 function calculatePrice(params) {
-  const { unitId, unitType, unitModel, startDate, endDate, mileage } = params;
+  const {
+    unitId,
+    unitType,
+    unitModel,
+    startDate,
+    endDate,
+    mileage,
+    vipCollisionDamageWaiver = false,
+    cancellationWaiver = false,
+    windshieldCoverage = false,
+    generator,
+  } = params;
 
   // === VALIDATION ===
   if (!startDate || !endDate) {
@@ -229,25 +323,45 @@ function calculatePrice(params) {
   // === CALCULATE DAYS ===
   const days = differenceInCalendarDays(end, start) + 1;
 
+  // === VALIDATE MINIMUM DAYS ===
+  if (days < MINIMUM_RENTAL_DAYS) {
+    throw new Error(
+      `Minimum rental duration is ${MINIMUM_RENTAL_DAYS} days. Requested: ${days} days`
+    );
+  }
+
   // === CALCULATE COMPONENTS ===
   // 1. Base price per day by season
-  const { total: basePrice, dailyRates } = calculateBasePriceWithBreakdown(start, days, unitPricing);
+  const { total: basePrice, dailyRates } = calculateBasePriceWithBreakdown(
+    start,
+    days,
+    unitPricing
+  );
 
-  // 2. CDW (Collision Damage Waiver)
-  const cdw = calculateCDW(days);
-
-  // 3. Preparation fee
+  // 2. Preparation fee
   const preparationFee = getPreparationFee(unitType);
 
-  // 4. Mileage cost
+  // 3. Mileage cost (optional)
   const mileageCost = calculateMileageCost(mileage, days);
 
-  // 5. Trailer hitch fee
+  // 4. VIP Collision Damage Waiver (optional)
+  const vipCDW = calculateVIPCollisionDamageWaiver(days, vipCollisionDamageWaiver);
+
+  // 5. Cancellation Waiver (optional)
+  const cancellation = calculateCancellationWaiver(days, cancellationWaiver);
+
+  // 6. Windshield Coverage (optional)
+  const windshield = calculateWindshieldCoverage(unitType, days, windshieldCoverage);
+
+  // 7. Generator (optional)
+  const generatorCost = calculateGenerator(generator, days);
+
+  // 8. Trailer hitch fee (only for trailers)
   const hitchFee = calculateHitchFee(unitType);
 
   // === SUBTOTAL (before tax) ===
   const subtotal = roundToTwo(
-    basePrice + cdw + preparationFee + mileageCost + hitchFee
+    basePrice + preparationFee + mileageCost + vipCDW + cancellation + windshield + generatorCost + hitchFee
   );
 
   // === TAX ===
@@ -268,11 +382,20 @@ function calculatePrice(params) {
     // Calculation details
     days,
     dailyRates,
+
+    // Base and mandatory fees
     basePrice,
-    cdw,
     preparationFee,
-    mileageCost,
-    hitchFee,
+
+    // Optional add-ons (only included if enabled)
+    ...(mileageCost > 0 && { mileageCost }),
+    ...(vipCDW > 0 && { vipCollisionDamageWaiver: vipCDW }),
+    ...(cancellation > 0 && { cancellationWaiver: cancellation }),
+    ...(windshield > 0 && { windshieldCoverage: windshield }),
+    ...(generatorCost > 0 && { generatorCost }),
+    ...(hitchFee > 0 && { hitchFee }),
+
+    // Totals
     subtotal,
     tax,
     total,
@@ -287,11 +410,14 @@ module.exports = {
   calculatePrice,
   getSeason,
 
-  // Utilities (for testing)
+  // Utilities (for testing and external use)
   roundToTwo,
   validateUnit,
   calculateBasePriceWithBreakdown,
-  calculateCDW,
+  calculateVIPCollisionDamageWaiver,
+  calculateCancellationWaiver,
+  calculateWindshieldCoverage,
+  calculateGenerator,
   getPreparationFee,
   calculateMileageCost,
   calculateHitchFee,
