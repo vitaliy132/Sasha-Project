@@ -17,6 +17,7 @@ process.env.CRM_EMAIL = "crm@test.com";
 const app = require("../src/app.js");
 const schema = require("../src/validators/lead.schema.js");
 const { formatLeadEmail } = require("../src/services/formatter.js");
+const { runRentalQuoteValidationTests } = require("../src/services/rentalQuote.js");
 
 let server;
 let baseUrl;
@@ -101,16 +102,18 @@ describe("API", () => {
       assert.strictEqual(body.breakdown.dailyRateTotal, 500);
       assert.strictEqual(body.breakdown.cdw, 210);
       assert.strictEqual(body.breakdown.prepFee, 149);
-      assert.strictEqual(body.breakdown.kmPackages, 350);
-      assert.strictEqual(body.breakdown.hitch, 0);
-      assert.strictEqual(body.breakdown.extraKm, 4.1);
-      assert.strictEqual(body.breakdown.generator, 10);
+      assert.strictEqual(body.breakdown.kmCost, 350);
+      assert.strictEqual(body.breakdown.hitchCost, 0);
+      assert.strictEqual(body.breakdown.extraKmCost, 4.1);
+      assert.strictEqual(body.breakdown.generatorCost, 10);
+      assert.strictEqual(body.breakdown.totalBeforeTax, 1223.1);
       assert.strictEqual(body.breakdown.tax, 159);
+      assert.strictEqual(body.breakdown.total, 1382.1);
       assert.strictEqual(body.lineItems.length, 8);
       assert.strictEqual(body.lineItems[0].name, "Daily Rental");
     });
 
-    it("rejects rentals shorter than 5 days", async () => {
+    it("charges minimum 5 days of daily rates when calendar rental is 3 days", async () => {
       const res = await fetch(baseUrl + "/calculate-rental", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -118,14 +121,20 @@ describe("API", () => {
           startDate: "2026-07-01",
           endDate: "2026-07-03",
           vehicleType: "classA",
-          cdwPlus: false,
+          cdwPlus: true,
           kmPackages: 0,
+          extraKm: 0,
+          generatorHours: 0,
         }),
       });
 
-      assert.strictEqual(res.status, 400);
+      assert.strictEqual(res.status, 200);
       const body = await res.json();
-      assert.strictEqual(body.error, "Rental must be at least 5 days");
+      assert.strictEqual(body.breakdown.days, 3);
+      assert.strictEqual(body.breakdown.dailyRateTotal, 1000);
+      assert.strictEqual(body.breakdown.cdw, 210);
+      assert.strictEqual(body.breakdown.prepFee, 199);
+      assert.ok(body.summaryMessage.includes("minimum of 5 days"));
     });
 
     it("includes trailer towing requirements message", async () => {
@@ -144,6 +153,7 @@ describe("API", () => {
       assert.strictEqual(res.status, 200);
       const body = await res.json();
       assert.ok(body.summaryMessage.includes("Please note: You must have a properly rated tow vehicle"));
+      assert.strictEqual(body.breakdown.hitchCost, 150);
     });
   });
 
@@ -260,6 +270,12 @@ describe("API", () => {
       });
       assert.strictEqual(res.status, 400);
     });
+  });
+});
+
+describe("Rental quote validation suite (logged cases)", () => {
+  it("runRentalQuoteValidationTests passes all business-rule cases", () => {
+    runRentalQuoteValidationTests({ silent: true, strict: true });
   });
 });
 

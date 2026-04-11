@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "test": "node --test tests/app.test.js",
+    "rental:validate": "node -e \"require('./src/services/rentalQuote').runRentalQuoteValidationTests()\"",
     "test:live": "node tests/live-check.js"
   },
   "keywords": [],
