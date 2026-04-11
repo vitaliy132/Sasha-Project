@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 const { processLead } = require("../services/leadProcessor");
+const { sendLeadEmail } = require("../services/mailer");
+const { asyncHandler, validateWebhookSecret } = require("../middleware/auth");
 const logger = require("../utils/logger");
 
 const isAuthorized = (providedSecret) => providedSecret === process.env.WEBHOOK_SECRET;
@@ -47,17 +49,13 @@ router.get("/manychat", (req, res) => {
   });
 });
 
-router.post("/test", async (req, res) => {
-  if (!isAuthorized(req.headers["x-webhook-secret"])) {
-    return res.status(401).send("Unauthorized");
-  }
-
+router.post("/test", validateWebhookSecret, asyncHandler(async (req, res) => {
   return sendTestEmailResponse(res, {
     successText: "Test email sent",
     failureText: "Test email failed.",
     logPrefix: "Test email error:",
   });
-});
+}));
 
 router.get("/test", async (req, res) => {
   if (!isAuthorized(req.query.secret)) {
@@ -71,24 +69,11 @@ router.get("/test", async (req, res) => {
   });
 });
 
-router.post("/manychat", async (req, res) => {
-  try {
-    if (!isAuthorized(req.headers["x-webhook-secret"])) {
-      return res.status(401).send("Unauthorized");
-    }
+router.post("/manychat", validateWebhookSecret, asyncHandler(async (req, res) => {
+  const normalized = normalizeLeadPayload(req.body || {});
+  const result = await processLead(normalized);
 
-    const normalized = normalizeLeadPayload(req.body || {});
-    const result = await processLead(normalized);
-
-    return res.status(result.statusCode).json(result.data);
-  } catch (err) {
-    logger.error("Lead processing error:", err.message || err);
-    if (err.code) logger.error("Error code:", err.code);
-    return res.status(500).json({
-      error: "Server error",
-      message: "Lead could not be processed.",
-    });
-  }
-});
+  return res.status(result.statusCode).json(result.data);
+}));
 
 module.exports = router;

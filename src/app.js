@@ -4,6 +4,7 @@ const helmet = require("helmet");
 const cors = require("cors");
 const morgan = require("morgan");
 
+const { HTTP_STATUS } = require("./utils/constants");
 const logger = require("./utils/logger");
 const { verifySmtp } = require("./services/mailer");
 const app = express();
@@ -41,7 +42,7 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/health", (req, res) => res.status(200).send("OK"));
+app.get("/health", (req, res) => res.status(HTTP_STATUS.OK).send("OK"));
 
 app.get("/api/env-check", (req, res) => {
   const required = Object.fromEntries(REQUIRED_ENV.map((key) => [key, hasEnv(key)]));
@@ -57,7 +58,7 @@ app.get("/api/env-check", (req, res) => {
 
 app.get("/api/smtp-check", async (req, res) => {
   if (process.env.ENABLE_SMTP_DEBUG !== "1") {
-    return res.status(404).json({ error: "Not found" });
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ error: "Not found" });
   }
   try {
     await verifySmtp();
@@ -65,7 +66,7 @@ app.get("/api/smtp-check", async (req, res) => {
   } catch (err) {
     logger.error("SMTP verify failed:", err.message || err);
     if (err.code) logger.error("SMTP error code:", err.code);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       ok: false,
       error: err.message || "SMTP verification failed",
       code: err.code || null,
@@ -78,7 +79,7 @@ app.use("/calculate-rental", require("./routes/rental"));
 app.use("/submit-lead", require("./routes/submitLead"));
 
 app.use((req, res) => {
-  res.status(404).json({ error: "Not found", path: req.path });
+  res.status(HTTP_STATUS.NOT_FOUND).json({ error: "Not found", path: req.path });
 });
 
 const port = process.env.PORT || 3000;

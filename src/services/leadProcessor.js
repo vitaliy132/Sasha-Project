@@ -2,6 +2,7 @@ const schema = require("../validators/lead.schema");
 const { sendLeadEmail } = require("./mailer");
 const { formatLeadEmail } = require("./formatter");
 const { appendLeadToSheet, checkLeadExists, markLeadAsSentToCRM } = require("./sheets");
+const { HTTP_STATUS, MESSAGES } = require("../utils/constants");
 const logger = require("../utils/logger");
 
 const processLead = async (normalized) => {
@@ -10,7 +11,7 @@ const processLead = async (normalized) => {
     const wasAlreadySent = existingLead.get("sent_to_crm") === "yes";
     return {
       success: false,
-      statusCode: 409,
+      statusCode: HTTP_STATUS.CONFLICT,
       data: {
         message: wasAlreadySent
           ? "Lead already sent to CRM (duplicate)"
@@ -29,7 +30,7 @@ const processLead = async (normalized) => {
     if (!appended) {
       return {
         success: false,
-        statusCode: 409,
+        statusCode: HTTP_STATUS.CONFLICT,
         data: {
           message: "Lead already exists in sheet (duplicate)",
           duplicate: true,
@@ -43,9 +44,9 @@ const processLead = async (normalized) => {
   if (!isValid) {
     return {
       success: false,
-      statusCode: 400,
+      statusCode: HTTP_STATUS.BAD_REQUEST,
       data: {
-        message: "Lead data incomplete or invalid. Appended to sheets with validated: no",
+        message: MESSAGES.LEAD_VALIDATION_FAILED,
         errors: error.details,
       },
     };
@@ -59,19 +60,19 @@ const processLead = async (normalized) => {
     logger.error("Failed to send lead email:", emailErr.message || emailErr);
     return {
       success: false,
-      statusCode: 500,
+      statusCode: HTTP_STATUS.INTERNAL_SERVER_ERROR,
       data: {
-        error: "Server error",
-        message: "Lead validated but email delivery failed",
+        error: MESSAGES.SERVER_ERROR,
+        message: MESSAGES.LEAD_EMAIL_FAILED,
       },
     };
   }
 
   return {
     success: true,
-    statusCode: 200,
+    statusCode: HTTP_STATUS.OK,
     data: {
-      message: "Lead accepted and sent to CRM",
+      message: MESSAGES.LEAD_PROCESSED,
       validated: true,
     },
   };
