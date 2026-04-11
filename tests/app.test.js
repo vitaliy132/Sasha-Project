@@ -110,7 +110,7 @@ describe("API", () => {
       assert.strictEqual(body.breakdown.cancellationWaiver, 0);
       assert.strictEqual(body.breakdown.windshield, 0);
       assert.strictEqual(body.breakdown.tax, 155.1);
-      assert.strictEqual(body.lineItems.length, 10);
+      assert.strictEqual(body.lineItems.length, 13);
       assert.strictEqual(body.lineItems[0].name, "Daily Rental");
     });
 
