@@ -86,7 +86,6 @@ describe("API", () => {
           endDate: "2026-01-05",
           vehicleType: "classC",
           vehicleModel: "mercedes_2021_2023",
-          cdwPlus: true,
           kmPackages: 1,
           generatorHours: 2,
           extraKm: 10,
@@ -98,6 +97,7 @@ describe("API", () => {
       assert.strictEqual(body.total, 1348.2);
       assert.strictEqual(body.totalFormatted, "$1348.20");
       assert.ok(body.summaryMessage.includes("Your estimated total for this rental is $1348.20."));
+      assert.ok(body.summaryMessage.includes("CDW Plus"));
       assert.ok(body.summaryMessage.includes("A $3000 security deposit is required."));
       assert.strictEqual(body.breakdown.days, 5);
       assert.strictEqual(body.breakdown.dailyRateTotal, 470);
@@ -123,7 +123,6 @@ describe("API", () => {
           endDate: "2026-07-03",
           vehicleType: "classA",
           vehicleModel: "30_slide_2024",
-          cdwPlus: true,
           kmPackages: 0,
           extraKm: 0,
           generatorHours: 0,
@@ -137,6 +136,7 @@ describe("API", () => {
       assert.strictEqual(body.breakdown.cdw, 210);
       assert.strictEqual(body.breakdown.prepFee, 199);
       assert.ok(body.summaryMessage.includes("minimum of 5 days"));
+      assert.ok(body.summaryMessage.includes("CDW Plus"));
     });
 
     it("returns 400 when vehicleModel is missing", async () => {
@@ -147,7 +147,6 @@ describe("API", () => {
           startDate: "2026-01-01",
           endDate: "2026-01-05",
           vehicleType: "classC",
-          cdwPlus: false,
           kmPackages: 0,
         }),
       });
@@ -163,7 +162,6 @@ describe("API", () => {
           endDate: "2026-06-05",
           vehicleType: "trailer",
           vehicleModel: "19_2023",
-          cdwPlus: false,
           kmPackages: 0,
         }),
       });
@@ -171,8 +169,11 @@ describe("API", () => {
       assert.strictEqual(res.status, 200);
       const body = await res.json();
       assert.ok(body.summaryMessage.includes("Please note: You must have a properly rated tow vehicle"));
+      assert.ok(body.summaryMessage.includes("CDW Plus"));
       assert.strictEqual(body.breakdown.hitch, 150);
       assert.strictEqual(body.breakdown.dailyRateTotal, 89 * 5);
+      assert.strictEqual(body.breakdown.cdw, 210);
+      assert.strictEqual(body.total, 1078.02);
     });
   });
 

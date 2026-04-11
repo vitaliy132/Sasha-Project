@@ -14,7 +14,6 @@ module.exports = Joi.object({
   endDate: Joi.string().required().custom(isIsoDate, "ISO date validation"),
   vehicleType: Joi.string().valid("classA", "classB", "classC", "trailer").required(),
   vehicleModel: Joi.string().trim().min(1).required(),
-  cdwPlus: Joi.boolean().required(),
   cancellationWaiver: Joi.boolean().optional().default(false),
   windshieldCoverage: Joi.boolean().optional().default(false),
   generatorDailyUnlimited: Joi.boolean().optional().default(false),

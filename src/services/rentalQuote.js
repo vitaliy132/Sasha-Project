@@ -116,10 +116,9 @@ function calculateDailyRateTotal(startDate, daysToSum, vehicleType, vehicleModel
 
 const getPrepFee = (vehicleType) => (vehicleType === "classA" ? 199 : 149);
 
-const calculateCDW = (cdwPlus, calendarDays) => {
-  if (!cdwPlus) return 0;
-  return roundToTwo(Math.max(calendarDays * CDW_DAILY_RATE, CDW_MINIMUM));
-};
+/** CDW Plus is always included in quotes ($30/day, minimum $210 per rental). */
+const calculateCDW = (calendarDays) =>
+  roundToTwo(Math.max(calendarDays * CDW_DAILY_RATE, CDW_MINIMUM));
 
 const calculateCancellationWaiver = (enabled, calendarDays) => {
   if (!enabled) return 0;
@@ -182,7 +181,6 @@ const sanitizePayload = (raw) => {
     endDate: raw?.endDate,
     vehicleType,
     vehicleModel,
-    cdwPlus: Boolean(raw?.cdwPlus),
     cancellationWaiver: Boolean(raw?.cancellationWaiver),
     windshieldCoverage: Boolean(raw?.windshieldCoverage),
     generatorDailyUnlimited: Boolean(raw?.generatorDailyUnlimited),
@@ -208,7 +206,7 @@ const buildLineItems = (b) => [
 const buildSummaryMessage = ({ total, vehicleType, calendarDays }) => {
   let summary =
     `Your estimated total for this rental is ${formatCurrency(total)}. ` +
-    "This includes the daily rental rate, optional protections, preparation fee, kilometer packages, taxes, a full tank of propane, and a full demonstration of the vehicle.";
+    "This includes the daily rental rate, preparation fee, kilometer packages where applicable, taxes, a full tank of propane, and a full demonstration of the vehicle.";
 
   if (vehicleType === "trailer") {
     summary +=
@@ -219,6 +217,8 @@ const buildSummaryMessage = ({ total, vehicleType, calendarDays }) => {
     summary += ` Base daily rates are charged for a minimum of ${MIN_CHARGE_DAYS_FOR_DAILY_RATE} days even when your selected dates are shorter.`;
   }
 
+  summary +=
+    " CDW Plus (Collision Damage Waiver) is included in the total shown above, as listed in the breakdown.";
   summary += " A $3000 security deposit is required.";
   return summary;
 };
@@ -258,7 +258,7 @@ const calculateRentalQuote = (payload) => {
     sanitized.vehicleType,
     sanitized.vehicleModel,
   );
-  const cdw = calculateCDW(sanitized.cdwPlus, days);
+  const cdw = calculateCDW(days);
 
   const prepFee = roundToTwo(getPrepFee(sanitized.vehicleType));
   const kmPackagesCost = roundToTwo(sanitized.kmPackages * KM_PACKAGE_RATE);
@@ -349,7 +349,6 @@ function runRentalQuoteValidationTests(options = {}) {
         startDate: "2026-01-01",
         endDate: "2026-01-03",
         vehicleType: "classC",
-        cdwPlus: true,
       }),
     );
     lg(JSON.stringify(q.breakdown, null, 2));
@@ -364,7 +363,6 @@ function runRentalQuoteValidationTests(options = {}) {
         startDate: "2026-07-01",
         endDate: "2026-07-07",
         vehicleType: "classC",
-        cdwPlus: true,
       }),
     );
     lg(JSON.stringify(q.breakdown, null, 2));
@@ -379,7 +377,6 @@ function runRentalQuoteValidationTests(options = {}) {
       endDate: "2026-06-19",
       vehicleType: "trailer",
       vehicleModel: "19_2023",
-      cdwPlus: false,
       kmPackages: 0,
       extraKm: 0,
       generatorHours: 0,
@@ -397,7 +394,6 @@ function runRentalQuoteValidationTests(options = {}) {
         startDate: "2026-01-01",
         endDate: "2026-01-05",
         vehicleType: "classC",
-        cdwPlus: false,
         extraKm: 10000,
         generatorHours: 100,
       }),
@@ -413,7 +409,6 @@ function runRentalQuoteValidationTests(options = {}) {
         startDate: "2026-02-01",
         endDate: "2026-02-07",
         vehicleType: "classC",
-        cdwPlus: false,
         kmPackages: null,
         extraKm: "",
         generatorHours: undefined,
