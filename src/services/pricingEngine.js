@@ -85,7 +85,6 @@ function normalizeUnitModel(unitModel) {
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9_\-]/g, "_")
-    .replace(/slide[_\-]?out/g, "")
     .replace(/_+/g, "_")
     .replace(/-+/g, "_")
     .replace(/^_|_$/g, "");

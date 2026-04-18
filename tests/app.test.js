@@ -85,7 +85,7 @@ describe("API", () => {
           startDate: "2026-01-01",
           endDate: "2026-01-05",
           vehicleType: "classC",
-          vehicleModel: "23ft_2020_2026",
+          vehicleModel: "25ft_slideout_2021_2023",
           kmPackages: 1,
           generatorHours: 2,
           extraKm: 10,

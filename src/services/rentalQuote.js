@@ -360,7 +360,7 @@ function runRentalQuoteValidationTests(options = {}) {
   };
 
   const base = (over) => ({
-    vehicleModel: "23ft_2020_2026",
+    vehicleModel: "25ft_slideout_2021_2023",
     kmPackages: 0,
     extraKm: 0,
     generatorHours: 0,

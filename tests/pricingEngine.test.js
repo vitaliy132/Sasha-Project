@@ -189,8 +189,8 @@ describe("calculateHitchFee() - Trailer Fee", () => {
 // UNIT VALIDATION TESTS
 // ============================================================================
 describe("validateUnit() - Unit Type & Model Validation", () => {
-  it("valid class_c model: 23ft_2020_2026", () => {
-    const pricing = validateUnit("class_c", "23ft_2020_2026");
+  it("valid class_c model: 25ft_slideout_2021_2023", () => {
+    const pricing = validateUnit("class_c", "25ft_slideout_2021_2023");
     assert.ok(pricing);
     assert.ok(pricing.PREMIUM);
     assert.ok(pricing.PRIME);
@@ -210,23 +210,23 @@ describe("validateUnit() - Unit Type & Model Validation", () => {
     );
   });
 
-  it("normalizes slide_out alias to valid class_c model", () => {
-    const pricing = validateUnit("class_c", "25ft_slide_out_2021_2023");
+  it("validates class_c model with slideout", () => {
+    const pricing = validateUnit("class_c", "25ft_slideout_2021_2023");
     assert.ok(pricing);
     assert.strictEqual(pricing.PREMIUM, 244);
   });
 
-  it("resolves 31ft_slide_out_2019 as class_c when model is normalized", () => {
+  it("resolves 31ft_slideout_bunks_2019 as class_c", () => {
     const result = calculatePrice({
       unitType: "class_c",
-      unitModel: "31ft_slide_out_2019",
+      unitModel: "31ft_slideout_bunks_2019",
       startDate: "2026-07-01",
       endDate: "2026-07-05",
       mileage: undefined,
     });
 
     assert.strictEqual(result.resolvedUnitType, "class_c");
-    assert.strictEqual(result.resolvedUnitModel, "31ft_2019");
+    assert.strictEqual(result.resolvedUnitModel, "31ft_slideout_bunks_2019");
     assert.strictEqual(result.basePrice, 264 * 5);
   });
 });
@@ -239,7 +239,7 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
     const result = calculatePrice({
       unitId: "unit-123",
       unitType: "class_c",
-      unitModel: "23ft_2020_2026",
+      unitModel: "25ft_slideout_2021_2023",
       startDate: "2026-01-05",
       endDate: "2026-01-09",
       mileage: undefined,
@@ -264,19 +264,19 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
   it("CROSS-SEASON: spans PRIME and PREMIUM", () => {
     const result = calculatePrice({
       unitType: "class_c",
-      unitModel: "23ft_2020_2026",
+      unitModel: "25ft_slideout_2021_2023",
       startDate: "2026-06-28",
       endDate: "2026-07-02",
       mileage: undefined,
     });
 
     assert.strictEqual(result.days, 5);
-    // Jun 28: PRIME (174)
-    // Jun 29: PRIME (174)
-    // Jun 30: PRIME (174)
-    // Jul 01: PREMIUM (224)
-    // Jul 02: PREMIUM (224)
-    const expected = 174 * 3 + 224 * 2;
+    // Jun 28: PRIME (189)
+    // Jun 29: PRIME (189)
+    // Jun 30: PRIME (189)
+    // Jul 01: PREMIUM (244)
+    // Jul 02: PREMIUM (244)
+    const expected = 189 * 3 + 244 * 2;
     assert.strictEqual(result.basePrice, expected);
   });
 
@@ -308,7 +308,7 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
   it("WITH MILEAGE PACKAGE: adds fixed cost once (NOT per day)", () => {
     const result = calculatePrice({
       unitType: "class_c",
-      unitModel: "23ft_2020_2026",
+      unitModel: "25ft_slideout_2021_2023",
       startDate: "2026-01-05",
       endDate: "2026-01-09",
       mileage: { type: "package", value: 1 },
@@ -322,7 +322,7 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
   it("WITH MILEAGE PER_KM: adds per-km cost once (NOT per day)", () => {
     const result = calculatePrice({
       unitType: "class_c",
-      unitModel: "23ft_2020_2026",
+      unitModel: "25ft_slideout_2021_2023",
       startDate: "2026-01-05",
       endDate: "2026-01-09",
       mileage: { type: "per_km", value: 100 },
@@ -335,7 +335,7 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
     assert.throws(
       () => calculatePrice({
         unitType: "class_c",
-        unitModel: "23ft_2020_2026",
+        unitModel: "25ft_slideout_2021_2023",
         startDate: "not-a-date",
         endDate: "2026-01-09",
       }),
@@ -347,7 +347,7 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
     assert.throws(
       () => calculatePrice({
         unitType: "class_c",
-        unitModel: "23ft_2020_2026",
+        unitModel: "25ft_slideout_2021_2023",
         startDate: "2026-01-09",
         endDate: "2026-01-05",
       }),
@@ -358,7 +358,7 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
   it("VALIDATION: missing unitType", () => {
     assert.throws(
       () => calculatePrice({
-        unitModel: "23ft_2020_2026",
+        unitModel: "25ft_slideout_2021_2023",
         startDate: "2026-01-05",
         endDate: "2026-01-09",
       }),
@@ -380,7 +380,7 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
   it("CALCULATION: TAX is 13% of subtotal", () => {
     const result = calculatePrice({
       unitType: "class_c",
-      unitModel: "23ft_2020_2026",
+      unitModel: "25ft_slideout_2021_2023",
       startDate: "2026-01-05",
       endDate: "2026-01-09",
     });
@@ -394,7 +394,7 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
     const result = calculatePrice({
       unitId: "unit-456",
       unitType: "class_c",
-      unitModel: "23ft_2020_2026",
+      unitModel: "25ft_slideout_2021_2023",
       startDate: "2026-01-05",
       endDate: "2026-01-09",
     });
@@ -402,7 +402,7 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
     // Metadata
     assert.strictEqual(result.unitId, "unit-456");
     assert.strictEqual(result.unitType, "class_c");
-    assert.strictEqual(result.unitModel, "23ft_2020_2026");
+    assert.strictEqual(result.unitModel, "25ft_slideout_2021_2023");
     assert.strictEqual(result.startDate, "2026-01-05");
     assert.strictEqual(result.endDate, "2026-01-09");
 
@@ -423,7 +423,7 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
   it("DAILY RATES BREAKDOWN: includes date, season, price for each day", () => {
     const result = calculatePrice({
       unitType: "class_c",
-      unitModel: "23ft_2020_2026",
+      unitModel: "25ft_slideout_2021_2023",
       startDate: "2026-06-28",
       endDate: "2026-07-02",
     });
@@ -462,7 +462,7 @@ describe("rounding & Precision", () => {
   it("complex calculation maintains precision at 2 decimals", () => {
     const result = calculatePrice({
       unitType: "class_c",
-      unitModel: "23ft_2020_2026",
+      unitModel: "25ft_slideout_2021_2023",
       startDate: "2026-01-05",
       endDate: "2026-01-09",
       mileage: { type: "per_km", value: 333 }, // 333 * 0.41 = 136.53
