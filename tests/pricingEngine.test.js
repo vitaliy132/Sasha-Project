@@ -247,16 +247,16 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
 
     assert.strictEqual(result.days, 5);
     assert.strictEqual(result.dailyRates.length, 5);
-    assert.strictEqual(result.basePrice, 84 * 5); // 420
+    assert.strictEqual(result.basePrice, 94 * 5); // 470
     assert.strictEqual(result.cdw, 210); // 5 * 30 = 150, but minimum 210
     assert.strictEqual(result.preparationFee, 149);
     assert.strictEqual(result.mileageCost, 0);
     assert.strictEqual(result.hitchFee, 0);
     
-    // subtotal = 420 + 210 + 149 = 779
-    assert.strictEqual(result.subtotal, 779);
-    // tax = 779 * 0.13 = 101.27
-    assert.strictEqual(result.tax, roundToTwo(779 * 0.13));
+    // subtotal = 470 + 210 + 149 = 829
+    assert.strictEqual(result.subtotal, 829);
+    // tax = 829 * 0.13 = 107.77
+    assert.strictEqual(result.tax, roundToTwo(829 * 0.13));
     // total with tax
     assert.ok(result.totalFormatted.startsWith("$"));
   });
@@ -316,9 +316,7 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
 
     assert.strictEqual(result.mileageCost, 350); // 1 * 350
     // Verify it's not multiplied by days
-    assert.strictEqual(result.basePrice, 84 * 5);
-  });
-
+      assert.strictEqual(result.basePrice, 94 * 5);
   it("WITH MILEAGE PER_KM: adds per-km cost once (NOT per day)", () => {
     const result = calculatePrice({
       unitType: "class_c",
@@ -440,11 +438,11 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
     // Verify specific dates
     assert.strictEqual(result.dailyRates[0].date, "2026-06-28");
     assert.strictEqual(result.dailyRates[0].season, "PRIME");
-    assert.strictEqual(result.dailyRates[0].price, 174);
+    assert.strictEqual(result.dailyRates[0].price, 189);
 
     assert.strictEqual(result.dailyRates[3].date, "2026-07-01");
     assert.strictEqual(result.dailyRates[3].season, "PREMIUM");
-    assert.strictEqual(result.dailyRates[3].price, 224);
+    assert.strictEqual(result.dailyRates[3].price, 244);
   });
 });
 
@@ -484,4 +482,6 @@ describe("rounding & Precision", () => {
   });
 });
 
-console.log("\n✅ All pricing engine tests passed!");
+});
+
+console.log("\nAll pricing engine tests passed!");

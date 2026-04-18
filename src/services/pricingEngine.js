@@ -95,31 +95,43 @@ function normalizeUnitModel(unitModel) {
 /**
  * Normalize unit type to canonical service keys.
  */
+const UNIT_TYPE_CANONICAL = {
+  class_a: "class_a",
+  classa: "class_a",
+  class_b: "class_b",
+  classb: "class_b",
+  class_c: "class_c",
+  classc: "class_c",
+  trailer: "trailer",
+};
+
+const UNIT_TYPE_TO_PRICING_CONFIG = {
+  class_a: "classA",
+  class_b: "classB",
+  class_c: "classC",
+  trailer: "trailer",
+};
+
+const PRICING_CONFIG_TO_UNIT_TYPE = {
+  classA: "class_a",
+  classB: "class_b",
+  classC: "class_c",
+  trailer: "trailer",
+};
+
 function normalizeUnitType(unitType) {
   if (!unitType) return undefined;
 
   const token = String(unitType).trim().toLowerCase();
-  if (token === "class_a" || token === "classa") return "class_a";
-  if (token === "class_b" || token === "classb") return "class_b";
-  if (token === "class_c" || token === "classc") return "class_c";
-  if (token === "trailer") return "trailer";
-  return undefined;
+  return UNIT_TYPE_CANONICAL[token];
 }
 
 function pricingConfigTypeFromUnitType(normalizedType) {
-  if (normalizedType === "class_a") return "classA";
-  if (normalizedType === "class_b") return "classB";
-  if (normalizedType === "class_c") return "classC";
-  if (normalizedType === "trailer") return "trailer";
-  return undefined;
+  return UNIT_TYPE_TO_PRICING_CONFIG[normalizedType];
 }
 
 function unitTypeFromPricingConfigType(configType) {
-  if (configType === "classA") return "class_a";
-  if (configType === "classB") return "class_b";
-  if (configType === "classC") return "class_c";
-  if (configType === "trailer") return "trailer";
-  return undefined;
+  return PRICING_CONFIG_TO_UNIT_TYPE[configType];
 }
 
 function findPricingTableForModel(normalizedModel) {
@@ -290,8 +302,8 @@ function calculateWindshieldCoverage(unitType, numDays, enabled) {
 
 /**
  * Calculate Generator Usage
- * - $5 per hour OR $60 per day (if unlimited)
- * @param {object} generatorUsage - { type: "hourly" | "daily", value: number }
+ * - $5 per hour OR $60 per day (daily unlimited)
+ * @param {object} generatorUsage - { type: "hourly" | "daily" | "dailyUnlimited", value: number }
  * @param {number} numDays - only used for reference
  * @returns {number}
  */
@@ -303,10 +315,11 @@ function calculateGenerator(generatorUsage, numDays) {
   const value = Number(generatorUsage.value) || 0;
   if (value < 0) return 0;
 
+  const unlimitedTypes = new Set(["daily", "dailyUnlimited"]);
   if (generatorUsage.type === "hourly") {
     const hourlyRate = 5;
     return roundToTwo(value * hourlyRate);
-  } else if (generatorUsage.type === "daily") {
+  } else if (unlimitedTypes.has(generatorUsage.type)) {
     const dailyRate = 60;
     return roundToTwo(value * dailyRate);
   }
