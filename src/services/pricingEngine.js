@@ -76,6 +76,24 @@ function getSeason(date) {
 }
 
 /**
+ * Normalize a model name to the valid pricing key format.
+ */
+function normalizeUnitModel(unitModel) {
+  if (!unitModel) return "";
+
+  const cleaned = String(unitModel)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_\-]/g, "_")
+    .replace(/slide[_\-]?out/g, "")
+    .replace(/_+/g, "_")
+    .replace(/-+/g, "_")
+    .replace(/^_|_$/g, "");
+
+  return cleaned;
+}
+
+/**
  * Validate unit exists and has pricing
  */
 function validateUnit(unitType, unitModel) {
@@ -91,13 +109,14 @@ function validateUnit(unitType, unitModel) {
     throw new Error(`Invalid unit type: ${unitType}`);
   }
 
+  const normalizedUnitModel = normalizeUnitModel(unitModel);
   const { PRICING } = pricingConfig;
   const table = PRICING[configType];
   if (!table) {
     throw new Error(`No pricing table for unit type: ${unitType}`);
   }
 
-  const pricing = table[unitModel];
+  const pricing = table[normalizedUnitModel];
   if (!pricing) {
     const available = Object.keys(table).join(", ");
     throw new Error(`Unknown model "${unitModel}". Available: ${available}`);

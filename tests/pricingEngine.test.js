@@ -209,6 +209,12 @@ describe("validateUnit() - Unit Type & Model Validation", () => {
       /Unknown model/
     );
   });
+
+  it("normalizes slide_out alias to valid class_c model", () => {
+    const pricing = validateUnit("class_c", "25ft_slide_out_2021_2023");
+    assert.ok(pricing);
+    assert.strictEqual(pricing.PREMIUM, 244);
+  });
 });
 
 // ============================================================================
