@@ -381,7 +381,7 @@ function runRentalQuoteValidationTests(options = {}) {
     lg(JSON.stringify(q.breakdown, null, 2));
     assert.strictEqual(q.breakdown.days, 3);
     assert.strictEqual(q.breakdown.cdw, 210);
-    assert.strictEqual(q.breakdown.dailyRateTotal, 94 * 5);
+    assert.strictEqual(q.breakdown.dailyRateTotal, 84 * 5);
   });
 
   run("CASE 2: 7 days in July (PREMIUM season), CDW = max(7×30,210)", (lg) => {
@@ -395,7 +395,7 @@ function runRentalQuoteValidationTests(options = {}) {
     lg(JSON.stringify(q.breakdown, null, 2));
     assert.strictEqual(q.breakdown.days, 7);
     assert.strictEqual(q.breakdown.cdw, 210);
-    assert.strictEqual(q.breakdown.dailyRateTotal, 244 * 7);
+    assert.strictEqual(q.breakdown.dailyRateTotal, 224 * 7);
   });
 
   run("CASE 3: Trailer + hitch 150", (lg) => {

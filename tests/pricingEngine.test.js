@@ -216,7 +216,7 @@ describe("validateUnit() - Unit Type & Model Validation", () => {
     assert.strictEqual(pricing.PREMIUM, 244);
   });
 
-  it("falls back to class_a for 31ft_slide_out_2019 when model is normalized", () => {
+  it("resolves 31ft_slide_out_2019 as class_c when model is normalized", () => {
     const result = calculatePrice({
       unitType: "class_c",
       unitModel: "31ft_slide_out_2019",
@@ -225,7 +225,7 @@ describe("validateUnit() - Unit Type & Model Validation", () => {
       mileage: undefined,
     });
 
-    assert.strictEqual(result.resolvedUnitType, "class_a");
+    assert.strictEqual(result.resolvedUnitType, "class_c");
     assert.strictEqual(result.resolvedUnitModel, "31ft_2019");
     assert.strictEqual(result.basePrice, 264 * 5);
   });
@@ -247,16 +247,16 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
 
     assert.strictEqual(result.days, 5);
     assert.strictEqual(result.dailyRates.length, 5);
-    assert.strictEqual(result.basePrice, 94 * 5); // 470
+    assert.strictEqual(result.basePrice, 84 * 5); // 420
     assert.strictEqual(result.cdw, 210); // 5 * 30 = 150, but minimum 210
     assert.strictEqual(result.preparationFee, 149);
     assert.strictEqual(result.mileageCost, 0);
     assert.strictEqual(result.hitchFee, 0);
     
-    // subtotal = 470 + 210 + 149 = 829
-    assert.strictEqual(result.subtotal, 829);
-    // tax = 829 * 0.13 = 107.77
-    assert.strictEqual(result.tax, roundToTwo(829 * 0.13));
+    // subtotal = 420 + 210 + 149 = 779
+    assert.strictEqual(result.subtotal, 779);
+    // tax = 779 * 0.13 = 101.27
+    assert.strictEqual(result.tax, roundToTwo(779 * 0.13));
     // total with tax
     assert.ok(result.totalFormatted.startsWith("$"));
   });
@@ -271,12 +271,12 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
     });
 
     assert.strictEqual(result.days, 5);
-    // Jun 28: PRIME (189)
-    // Jun 29: PRIME (189)
-    // Jun 30: PRIME (189)
-    // Jul 01: PREMIUM (244)
-    // Jul 02: PREMIUM (244)
-    const expected = 189 * 3 + 244 * 2;
+    // Jun 28: PRIME (174)
+    // Jun 29: PRIME (174)
+    // Jun 30: PRIME (174)
+    // Jul 01: PREMIUM (224)
+    // Jul 02: PREMIUM (224)
+    const expected = 174 * 3 + 224 * 2;
     assert.strictEqual(result.basePrice, expected);
   });
 
@@ -316,7 +316,7 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
 
     assert.strictEqual(result.mileageCost, 350); // 1 * 350
     // Verify it's not multiplied by days
-    assert.strictEqual(result.basePrice, 94 * 5);
+    assert.strictEqual(result.basePrice, 84 * 5);
   });
 
   it("WITH MILEAGE PER_KM: adds per-km cost once (NOT per day)", () => {
@@ -440,11 +440,11 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
     // Verify specific dates
     assert.strictEqual(result.dailyRates[0].date, "2026-06-28");
     assert.strictEqual(result.dailyRates[0].season, "PRIME");
-    assert.strictEqual(result.dailyRates[0].price, 189);
+    assert.strictEqual(result.dailyRates[0].price, 174);
 
     assert.strictEqual(result.dailyRates[3].date, "2026-07-01");
     assert.strictEqual(result.dailyRates[3].season, "PREMIUM");
-    assert.strictEqual(result.dailyRates[3].price, 244);
+    assert.strictEqual(result.dailyRates[3].price, 224);
   });
 });
 

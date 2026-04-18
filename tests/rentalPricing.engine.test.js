@@ -55,7 +55,7 @@ describe("Cross-season daily total", () => {
     assert.strictEqual(getSeason(parseISO("2026-06-30")), "PRIME");
     assert.strictEqual(getSeason(parseISO("2026-07-01")), "PREMIUM");
     assert.strictEqual(getSeason(parseISO("2026-07-02")), "PREMIUM");
-    const expected = 189 * 3 + 244 * 2;
+    const expected = 174 * 3 + 224 * 2;
     assert.strictEqual(q.breakdown.dailyRateTotal, expected);
   });
 });

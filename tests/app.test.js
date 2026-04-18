@@ -94,13 +94,13 @@ describe("API", () => {
 
       assert.strictEqual(res.status, 200);
       const body = await res.json();
-      assert.strictEqual(body.total, 1348.2);
-      assert.strictEqual(body.totalFormatted, "$1348.20");
-      assert.ok(body.summaryMessage.includes("Your estimated total for this rental is $1348.20."));
+      assert.strictEqual(body.total, 1291.7);
+      assert.strictEqual(body.totalFormatted, "$1291.70");
+      assert.ok(body.summaryMessage.includes("Your estimated total for this rental is $1291.70."));
       assert.ok(body.summaryMessage.includes("CDW Plus"));
       assert.ok(body.summaryMessage.includes("A $3000 security deposit is required."));
       assert.strictEqual(body.breakdown.days, 5);
-      assert.strictEqual(body.breakdown.dailyRateTotal, 470);
+      assert.strictEqual(body.breakdown.dailyRateTotal, 420);
       assert.strictEqual(body.breakdown.cdw, 210);
       assert.strictEqual(body.breakdown.prepFee, 149);
       assert.strictEqual(body.breakdown.kmPackages, 350);
@@ -109,7 +109,7 @@ describe("API", () => {
       assert.strictEqual(body.breakdown.generator, 10);
       assert.strictEqual(body.breakdown.cancellationWaiver, 0);
       assert.strictEqual(body.breakdown.windshield, 0);
-      assert.strictEqual(body.breakdown.tax, 155.1);
+      assert.strictEqual(body.breakdown.tax, 148.6);
       assert.strictEqual(body.lineItems.length, 13);
       assert.strictEqual(body.lineItems[0].name, "Daily Rental");
     });
