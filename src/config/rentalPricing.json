@@ -24,7 +24,7 @@
       "31ft_2019": { "PREMIUM": 264, "PRIME": 209, "SHOULDER": 129, "ECONOMY": 99 }
     },
     "classC": {
-      "25ft_2021_2023": { "PREMIUM": 189, "PRIME": 119, "SHOULDER": 94, "ECONOMY": null },
+      "25ft_2021_2023": { "PREMIUM": 244, "PRIME": 189, "SHOULDER": 119, "ECONOMY": 94 },
       "25ft_2018_economy": { "PREMIUM": 214, "PRIME": 159, "SHOULDER": 99, "ECONOMY": 94 },
       "23ft_2020_2026": { "PREMIUM": 224, "PRIME": 174, "SHOULDER": 109, "ECONOMY": 84 }
     },
