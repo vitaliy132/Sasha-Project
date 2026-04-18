@@ -215,6 +215,20 @@ describe("validateUnit() - Unit Type & Model Validation", () => {
     assert.ok(pricing);
     assert.strictEqual(pricing.PREMIUM, 244);
   });
+
+  it("falls back to class_a for 31ft_slide_out_2019 when model is normalized", () => {
+    const result = calculatePrice({
+      unitType: "class_c",
+      unitModel: "31ft_slide_out_2019",
+      startDate: "2026-07-01",
+      endDate: "2026-07-05",
+      mileage: undefined,
+    });
+
+    assert.strictEqual(result.resolvedUnitType, "class_a");
+    assert.strictEqual(result.resolvedUnitModel, "31ft_2019");
+    assert.strictEqual(result.basePrice, 264 * 5);
+  });
 });
 
 // ============================================================================

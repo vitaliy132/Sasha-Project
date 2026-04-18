@@ -94,35 +94,93 @@ function normalizeUnitModel(unitModel) {
 }
 
 /**
- * Validate unit exists and has pricing
+ * Normalize unit type to canonical service keys.
  */
-function validateUnit(unitType, unitModel) {
-  const typeMap = {
-    class_a: "classA",
-    class_b: "classB",
-    class_c: "classC",
-    trailer: "trailer",
-  };
+function normalizeUnitType(unitType) {
+  if (!unitType) return undefined;
 
-  const configType = typeMap[unitType];
+  const token = String(unitType).trim().toLowerCase();
+  if (token === "class_a" || token === "classa") return "class_a";
+  if (token === "class_b" || token === "classb") return "class_b";
+  if (token === "class_c" || token === "classc") return "class_c";
+  if (token === "trailer") return "trailer";
+  return undefined;
+}
+
+function pricingConfigTypeFromUnitType(normalizedType) {
+  if (normalizedType === "class_a") return "classA";
+  if (normalizedType === "class_b") return "classB";
+  if (normalizedType === "class_c") return "classC";
+  if (normalizedType === "trailer") return "trailer";
+  return undefined;
+}
+
+function unitTypeFromPricingConfigType(configType) {
+  if (configType === "classA") return "class_a";
+  if (configType === "classB") return "class_b";
+  if (configType === "classC") return "class_c";
+  if (configType === "trailer") return "trailer";
+  return undefined;
+}
+
+function findPricingTableForModel(normalizedModel) {
+  const { PRICING } = pricingConfig;
+
+  for (const [configType, table] of Object.entries(PRICING)) {
+    if (Object.prototype.hasOwnProperty.call(table, normalizedModel)) {
+      return { configType, pricing: table[normalizedModel] };
+    }
+  }
+
+  return null;
+}
+
+function resolveUnit(unitType, unitModel) {
+  const normalizedType = normalizeUnitType(unitType);
+  if (!normalizedType) {
+    throw new Error(`Invalid unit type: ${unitType}`);
+  }
+
+  const configType = pricingConfigTypeFromUnitType(normalizedType);
   if (!configType) {
     throw new Error(`Invalid unit type: ${unitType}`);
   }
 
-  const normalizedUnitModel = normalizeUnitModel(unitModel);
+  const normalizedModel = normalizeUnitModel(unitModel);
   const { PRICING } = pricingConfig;
   const table = PRICING[configType];
   if (!table) {
     throw new Error(`No pricing table for unit type: ${unitType}`);
   }
 
-  const pricing = table[normalizedUnitModel];
-  if (!pricing) {
-    const available = Object.keys(table).join(", ");
-    throw new Error(`Unknown model "${unitModel}". Available: ${available}`);
+  const pricing = table[normalizedModel];
+  if (pricing) {
+    return {
+      unitType: normalizedType,
+      unitModel: normalizedModel,
+      pricing,
+    };
   }
 
-  return pricing;
+  const fallback = findPricingTableForModel(normalizedModel);
+  if (fallback) {
+    const fallbackUnitType = unitTypeFromPricingConfigType(fallback.configType);
+    return {
+      unitType: fallbackUnitType || normalizedType,
+      unitModel: normalizedModel,
+      pricing: fallback.pricing,
+    };
+  }
+
+  const available = Object.keys(table).join(", ");
+  throw new Error(`Unknown model "${unitModel}". Available: ${available}`);
+}
+
+/**
+ * Validate unit exists and has pricing
+ */
+function validateUnit(unitType, unitModel) {
+  return resolveUnit(unitType, unitModel).pricing;
 }
 
 /**
@@ -347,8 +405,9 @@ function calculatePrice(params) {
     throw new Error("unitType and unitModel are required");
   }
 
-  // Get unit pricing (validates unit exists)
-  const unitPricing = validateUnit(unitType, unitModel);
+  const resolvedUnit = resolveUnit(unitType, unitModel);
+  const unitPricing = resolvedUnit.pricing;
+  const effectiveUnitType = resolvedUnit.unitType;
 
   // === CALCULATE DAYS ===
   let days = differenceInCalendarDays(end, start) + 1;
@@ -370,7 +429,7 @@ function calculatePrice(params) {
   const cdw = calculateCDW(days);
 
   // 3. Preparation fee
-  const preparationFee = getPreparationFee(unitType);
+  const preparationFee = getPreparationFee(effectiveUnitType);
 
   // 4. Mileage cost (optional)
   const mileageCost = calculateMileageCost(mileage, days);
@@ -382,13 +441,13 @@ function calculatePrice(params) {
   const cancellation = calculateCancellationWaiver(days, cancellationWaiver);
 
   // 7. Windshield Coverage (optional)
-  const windshield = calculateWindshieldCoverage(unitType, days, windshieldCoverage);
+  const windshield = calculateWindshieldCoverage(effectiveUnitType, days, windshieldCoverage);
 
   // 8. Generator (optional)
   const generatorCost = calculateGenerator(generator, days);
 
   // 9. Trailer hitch fee (only for trailers)
-  const hitchFee = calculateHitchFee(unitType);
+  const hitchFee = calculateHitchFee(effectiveUnitType);
 
   // === SUBTOTAL (before tax) ===
   const subtotal = roundToTwo(
@@ -407,6 +466,8 @@ function calculatePrice(params) {
     unitId,
     unitType,
     unitModel,
+    resolvedUnitType: effectiveUnitType,
+    resolvedUnitModel: resolvedUnit.unitModel,
     startDate,
     endDate,
 
