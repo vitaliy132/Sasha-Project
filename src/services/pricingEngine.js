@@ -1,88 +1,18 @@
 const { addDays, differenceInCalendarDays, format, isValid, parseISO } = require("date-fns");
+const { roundToTwo, getSeason, mmdd, inSeasonRange } = require("../utils/pricingUtils");
 const pricingConfig = require("../config/rentalPricing.json");
-
-const TAX_RATE = 0.13;
-const TRAILER_HITCH_FEE = 150;
-const MINIMUM_RENTAL_DAYS = 5;
-const CDW_DAILY_RATE = 30;
-const CDW_MINIMUM = 210;
-const BIKE_RACK_FEE = 50;
-const WINTERIZATION_FEES = {
-  class_a: 199.95,
-  class_b: 149.95,
-  class_c: 149.95,
-  trailer: 149.95,
-};
-const kmPackagePrice = 350;
-const additionalKmRate = 0.41;
-
-// PREP FEES by unit type
-const PREP_FEES = {
-  class_a: 199,
-  class_b: 149,
-  class_c: 149,
-  trailer: 149,
-};
-
-/**
- * Round to 2 decimal places
- */
-const roundToTwo = (num) => {
-  const n = Number(num);
-  if (!Number.isFinite(n)) return 0;
-  return Number(n.toFixed(2));
-};
-
-/**
- * Format date to MM-dd string for season comparison
- */
-function mmdd(date) {
-  return format(date, "MM-dd");
-}
-
-/**
- * Check if a date string (MM-dd format) falls within a range.
- * Handles wrap-around (e.g., Oct 26 - May 14 wraps past year-end)
- */
-function inSeasonRange(d, start, end) {
-  if (start <= end) {
-    return d >= start && d <= end;
-  }
-  // Wrap-around case (e.g., "10-26" to "05-14")
-  return d >= start || d <= end;
-}
-
-/**
- * Determine season for a given date
- * @param {Date} date
- * @returns {"PREMIUM"|"PRIME"|"SHOULDER"|"ECONOMY"}
- */
-function getSeason(date) {
-  const d = mmdd(date);
-  const { SEASONS } = pricingConfig;
-
-  // PREMIUM: Jul 1 – Aug 31
-  if (inSeasonRange(d, SEASONS.PREMIUM.start, SEASONS.PREMIUM.end)) {
-    return "PREMIUM";
-  }
-
-  // PRIME: Jun 11 – Jun 30 and Sep 1 – Sep 30
-  for (const range of SEASONS.PRIME) {
-    if (inSeasonRange(d, range.start, range.end)) {
-      return "PRIME";
-    }
-  }
-
-  // SHOULDER: May 15 – Jun 10 and Oct 1 – Oct 25
-  for (const range of SEASONS.SHOULDER) {
-    if (inSeasonRange(d, range.start, range.end)) {
-      return "SHOULDER";
-    }
-  }
-
-  // ECONOMY: Oct 26 – May 14
-  return "ECONOMY";
-}
+const {
+  TAX_RATE,
+  TRAILER_HITCH_FEE,
+  MINIMUM_RENTAL_DAYS,
+  CDW_DAILY_RATE,
+  CDW_MINIMUM,
+  BIKE_RACK_FEE,
+  WINTERIZATION_FEES,
+  KM_PACKAGE_RATE,
+  EXTRA_KM_RATE,
+  PREP_FEES,
+} = require("../utils/pricingConstants");
 
 /**
  * Normalize a model name to the valid pricing key format.
@@ -378,7 +308,7 @@ function calculateMileageCost(mileageOptions, numDays, unitType) {
 
   if (mileageOptions.type === "package") {
     // Fixed price per package (does NOT multiply by days)
-    return roundToTwo(value * kmPackagePrice);
+    return roundToTwo(value * KM_PACKAGE_RATE);
   } else if (mileageOptions.type === "per_km") {
     // Do NOT calculate extra kms here (handled at drop-off)
     return 0;

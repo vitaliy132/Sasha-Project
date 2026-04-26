@@ -1,64 +1,26 @@
 const assert = require("node:assert");
 const { addDays, differenceInCalendarDays, format, isValid, parseISO } = require("date-fns");
+const { roundToTwo, getSeason, mmdd, inSeasonRange } = require("../utils/pricingUtils");
 
 const pricingConfig = require("../config/rentalPricing.json");
-
-const TAX_RATE = 0.13;
-const MIN_CHARGE_DAYS_FOR_DAILY_RATE = 5;
-const CDW_DAILY_RATE = 30;
-const CDW_MINIMUM = 210;
-const KM_PACKAGE_RATE = 350;
-const TRAILER_HITCH_FEE = 150;
-const EXTRA_KM_RATE = 0.41;
-const GENERATOR_HOUR_RATE = 5;
-const GENERATOR_DAILY_UNLIMITED_RATE = 60;
-const CANCELLATION_DAILY_RATE = 20;
-const CANCELLATION_MINIMUM = 240;
-
-const { SEASONS: SEASON_DEFINITIONS, PRICING, ADD_ONS, defaults } = pricingConfig;
-
-const roundToTwo = (num) => {
-  const n = Number(num);
-  if (!Number.isFinite(n)) return 0;
-  return Number(n.toFixed(2));
-};
-
-const formatCurrency = (value) => `$${roundToTwo(value).toFixed(2)}`;
-
-/** @param {Date} date */
-function mmdd(date) {
-  return format(date, "MM-dd");
-}
-
-/** Inclusive calendar range on MM-dd strings (handles wrap when start > end). */
-function inSeasonRange(d, start, end) {
-  if (start <= end) {
-    return d >= start && d <= end;
-  }
-  return d >= start || d <= end;
-}
-
-/**
- * @param {Date} date
- * @returns {"PREMIUM"|"PRIME"|"SHOULDER"|"ECONOMY"}
- */
-function getSeason(date) {
-  const d = mmdd(date);
-  const premium = SEASON_DEFINITIONS.PREMIUM;
-  if (inSeasonRange(d, premium.start, premium.end)) {
-    return "PREMIUM";
-  }
-  for (const r of SEASON_DEFINITIONS.PRIME) {
-    if (inSeasonRange(d, r.start, r.end)) return "PRIME";
-  }
-  for (const r of SEASON_DEFINITIONS.SHOULDER) {
-    if (inSeasonRange(d, r.start, r.end)) return "SHOULDER";
-  }
-  for (const r of SEASON_DEFINITIONS.ECONOMY) {
-    if (inSeasonRange(d, r.start, r.end)) return "ECONOMY";
-  }
-  return "ECONOMY";
-}
+const {
+  TAX_RATE,
+  MIN_CHARGE_DAYS_FOR_DAILY_RATE,
+  CDW_DAILY_RATE,
+  CDW_MINIMUM,
+  KM_PACKAGE_RATE,
+  TRAILER_HITCH_FEE,
+  EXTRA_KM_RATE,
+  GENERATOR_HOUR_RATE,
+  GENERATOR_DAILY_UNLIMITED_RATE,
+  CANCELLATION_DAILY_RATE,
+  CANCELLATION_MINIMUM,
+  BIKE_RACK_FEE,
+  WINTERIZATION_FEES,
+  VALID_VEHICLE_TYPES,
+  SECURITY_DEPOSIT,
+  AWNING_DEPOSIT,
+} = require("../utils/pricingConstants");
 
 function listVehicleModels(vehicleType) {
   const table = PRICING[vehicleType];
