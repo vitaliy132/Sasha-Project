@@ -22,6 +22,8 @@ const {
   AWNING_DEPOSIT,
 } = require("../utils/pricingConstants");
 
+const { SEASONS: SEASON_DEFINITIONS, PRICING, ADD_ONS, defaults } = pricingConfig;
+
 function listVehicleModels(vehicleType) {
   const table = PRICING[vehicleType];
   if (!table) return [];
