@@ -6,6 +6,8 @@ const TRAILER_HITCH_FEE = 150;
 const MINIMUM_RENTAL_DAYS = 5;
 const CDW_DAILY_RATE = 30;
 const CDW_MINIMUM = 210;
+const kmPackagePrice = 350;
+const additionalKmRate = 0.41;
 
 // PREP FEES by unit type
 const PREP_FEES = {
@@ -308,22 +310,9 @@ function calculateWindshieldCoverage(unitType, numDays, enabled) {
  * @returns {number}
  */
 function calculateGenerator(generatorUsage, numDays) {
-  if (!generatorUsage || !generatorUsage.type || generatorUsage.value === 0) {
-    return 0;
-  }
-
-  const value = Number(generatorUsage.value) || 0;
-  if (value < 0) return 0;
-
-  const unlimitedTypes = new Set(["daily", "dailyUnlimited"]);
-  if (generatorUsage.type === "hourly") {
-    const hourlyRate = 5;
-    return roundToTwo(value * hourlyRate);
-  } else if (unlimitedTypes.has(generatorUsage.type)) {
-    const dailyRate = 60;
-    return roundToTwo(value * dailyRate);
-  }
-
+  // Do NOT include generator hourly cost in estimate
+  // Billing handled after return
+  // Only store selection flag if needed
   return 0;
 }
 
@@ -354,12 +343,10 @@ function calculateMileageCost(mileageOptions, numDays) {
 
   if (mileageOptions.type === "package") {
     // Fixed price per package (does NOT multiply by days)
-    const packageRate = 350; // or get from config
-    return roundToTwo(value * packageRate);
+    return roundToTwo(value * kmPackagePrice);
   } else if (mileageOptions.type === "per_km") {
-    // Per km rate (does NOT multiply by days)
-    const kmRate = 0.41; // or get from config
-    return roundToTwo(value * kmRate);
+    // Do NOT calculate extra kms here (handled at drop-off)
+    return 0;
   }
 
   return 0;

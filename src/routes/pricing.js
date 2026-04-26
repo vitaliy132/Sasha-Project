@@ -39,7 +39,17 @@ router.post("/", asyncHandler(async (req, res) => {
   try {
     const result = calculatePrice(value);
     logger.info("Pricing calculation success", { total: result.total, days: result.days });
-    return res.json(result);
+    // Return simplified format as per requirements
+    return res.json({
+      total: result.total,
+      breakdown: {
+        dailyRate: result.basePrice,
+        cdw: result.cdw,
+        prepFee: result.preparationFee,
+        kmPackages: result.mileageCost,
+        tax: result.tax,
+      },
+    });
   } catch (err) {
     logger.error("Pricing calculation error", err.message);
     return res.status(HTTP_STATUS.BAD_REQUEST).json({

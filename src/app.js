@@ -87,6 +87,7 @@ app.use("/api/leads", require("./routes/leads"));
 // app.use("/calculate", require("./routes/pricing"));
 app.use("/calculate-rental", require("./routes/rental"));
 app.use("/submit-lead", require("./routes/submitLead"));
+app.use("/api", require("./routes/availability"));
 
 app.use((req, res) => {
   res.status(HTTP_STATUS.NOT_FOUND).json({ error: "Not found", path: req.path });

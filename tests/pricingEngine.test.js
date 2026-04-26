@@ -142,14 +142,14 @@ describe("calculateMileageCost() - Mileage Options", () => {
     assert.strictEqual(cost, 700);
   });
 
-  it("Per-km type: 100 km * 0.41 = 41", () => {
+  it("Per-km type: does not calculate extra kms (handled at drop-off)", () => {
     const cost = calculateMileageCost({ type: "per_km", value: 100 }, 5);
-    assert.strictEqual(cost, roundToTwo(41));
+    assert.strictEqual(cost, 0);
   });
 
-  it("Per-km type: 1000 km * 0.41 = 410", () => {
+  it("Per-km type: does not calculate extra kms (handled at drop-off)", () => {
     const cost = calculateMileageCost({ type: "per_km", value: 1000 }, 5);
-    assert.strictEqual(cost, roundToTwo(410));
+    assert.strictEqual(cost, 0);
   });
 
   it("Mileage cost does NOT multiply by days (for either type)", () => {
@@ -317,7 +317,7 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
     assert.strictEqual(result.mileageCost, 350); // 1 * 350
     // Verify it's not multiplied by days
       assert.strictEqual(result.basePrice, 94 * 5);
-  it("WITH MILEAGE PER_KM: adds per-km cost once (NOT per day)", () => {
+  it("WITH MILEAGE PER_KM: does not calculate extra kms (handled at drop-off)", () => {
     const result = calculatePrice({
       unitType: "class_c",
       unitModel: "25ft_slideout_2021_2023",
@@ -326,7 +326,7 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
       mileage: { type: "per_km", value: 100 },
     });
 
-    assert.strictEqual(result.mileageCost, roundToTwo(100 * 0.41)); // 41
+    assert.strictEqual(result.mileageCost, 0); // Do not calculate extra kms in estimate
   });
 
   it("VALIDATION: invalid date format", () => {
