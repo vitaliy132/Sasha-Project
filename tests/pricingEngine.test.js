@@ -128,38 +128,38 @@ describe("getPreparationFee() - Unit Type Fees", () => {
 // ============================================================================
 describe("calculateMileageCost() - Mileage Options", () => {
   it("No mileage option: 0", () => {
-    const cost = calculateMileageCost(undefined, 5);
+    const cost = calculateMileageCost(undefined, 5, "class_a");
     assert.strictEqual(cost, 0);
   });
 
   it("Package type: 1 package * 350 = 350", () => {
-    const cost = calculateMileageCost({ type: "package", value: 1 }, 5);
+    const cost = calculateMileageCost({ type: "package", value: 1 }, 5, "class_a");
     assert.strictEqual(cost, 350);
   });
 
   it("Package type: 2 packages * 350 = 700", () => {
-    const cost = calculateMileageCost({ type: "package", value: 2 }, 5);
+    const cost = calculateMileageCost({ type: "package", value: 2 }, 5, "class_a");
     assert.strictEqual(cost, 700);
   });
 
   it("Per-km type: does not calculate extra kms (handled at drop-off)", () => {
-    const cost = calculateMileageCost({ type: "per_km", value: 100 }, 5);
+    const cost = calculateMileageCost({ type: "per_km", value: 100 }, 5, "class_a");
     assert.strictEqual(cost, 0);
   });
 
   it("Per-km type: does not calculate extra kms (handled at drop-off)", () => {
-    const cost = calculateMileageCost({ type: "per_km", value: 1000 }, 5);
+    const cost = calculateMileageCost({ type: "per_km", value: 1000 }, 5, "class_a");
     assert.strictEqual(cost, 0);
   });
 
   it("Mileage cost does NOT multiply by days (for either type)", () => {
-    const cost1 = calculateMileageCost({ type: "package", value: 1 }, 5);
-    const cost2 = calculateMileageCost({ type: "package", value: 1 }, 100);
+    const cost1 = calculateMileageCost({ type: "package", value: 1 }, 5, "class_a");
+    const cost2 = calculateMileageCost({ type: "package", value: 1 }, 100, "class_a");
     assert.strictEqual(cost1, cost2); // Should be same regardless of days
   });
 
   it("Zero value: 0", () => {
-    const cost = calculateMileageCost({ type: "package", value: 0 }, 5);
+    const cost = calculateMileageCost({ type: "package", value: 0 }, 5, "class_a");
     assert.strictEqual(cost, 0);
   });
 });

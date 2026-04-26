@@ -275,7 +275,7 @@ const calculateRentalQuote = (payload) => {
   const prepFee = roundToTwo(getPrepFee(sanitized.vehicleType));
   const kmPackagesCost = roundToTwo(sanitized.kmPackages * KM_PACKAGE_RATE);
   const hitch = roundToTwo(sanitized.vehicleType === "trailer" ? TRAILER_HITCH_FEE : 0);
-  const extraKm = roundToTwo(sanitized.extraKm * EXTRA_KM_RATE);
+  const extraKm = sanitized.vehicleType === "trailer" ? 0 : roundToTwo(sanitized.extraKm * EXTRA_KM_RATE);
   const generator = calculateGenerator(
     sanitized.generatorDailyUnlimited,
     sanitized.generatorHours,
@@ -404,6 +404,23 @@ function runRentalQuoteValidationTests(options = {}) {
     });
     lg(JSON.stringify(q.breakdown, null, 2));
     assert.strictEqual(q.breakdown.hitch, 150);
+  });
+
+  run("CASE 3.5: Trailer with extraKm should not charge", (lg) => {
+    const q = calculateRentalQuote({
+      startDate: "2026-06-15",
+      endDate: "2026-06-19",
+      vehicleType: "trailer",
+      vehicleModel: "19ft_2023",
+      kmPackages: 0,
+      extraKm: 100,
+      generatorHours: 0,
+      cancellationWaiver: false,
+      windshieldCoverage: false,
+      generatorDailyUnlimited: false,
+    });
+    lg(JSON.stringify(q.breakdown, null, 2));
+    assert.strictEqual(q.breakdown.extraKm, 0);
   });
 
   run("CASE 4: Large extraKm + hourly generator", (lg) => {

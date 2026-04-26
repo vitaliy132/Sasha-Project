@@ -331,9 +331,10 @@ function getPreparationFee(unitType) {
  * Calculate mileage cost
  * @param {object} mileageOptions - { type: "package" | "per_km", value: number }
  * @param {number} numDays - only used for reference/logging, cost does not multiply by days
+ * @param {string} unitType - the unit type (e.g., "trailer")
  * @returns {number}
  */
-function calculateMileageCost(mileageOptions, numDays) {
+function calculateMileageCost(mileageOptions, numDays, unitType) {
   if (!mileageOptions || !mileageOptions.type || mileageOptions.value === 0) {
     return 0;
   }
@@ -431,7 +432,7 @@ function calculatePrice(params) {
   const preparationFee = getPreparationFee(effectiveUnitType);
 
   // 4. Mileage cost (optional)
-  const mileageCost = calculateMileageCost(mileage, days);
+  const mileageCost = calculateMileageCost(mileage, days, effectiveUnitType);
 
   // 5. Optional VIP Collision Damage Waiver
   const vipCDW = calculateVIPCollisionDamageWaiver(days, vipCollisionDamageWaiver);
