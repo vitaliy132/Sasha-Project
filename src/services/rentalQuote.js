@@ -151,10 +151,6 @@ const calculateBeddingKit = (people) => {
   return roundToTwo(people * ADD_ONS.beddingKit.perPerson);
 };
 
-const calculateBikeRack = (enabled) => {
-  return enabled ? roundToTwo(ADD_ONS.bikeRack.perTrip) : 0;
-};
-
 const calculateGenerator = (generatorDailyUnlimited, generatorHours, billedDayCount) => {
   if (generatorDailyUnlimited) {
     return roundToTwo(ADD_ONS.generator.daily * billedDayCount);
@@ -201,7 +197,6 @@ const sanitizePayload = (raw) => {
     generatorHours: toNonNegativeNumber(raw?.generatorHours, 0),
     kitchenKit: Boolean(raw?.kitchenKit),
     beddingKitPeople: toNonNegativeInteger(raw?.beddingKitPeople, 0),
-    bikeRack: Boolean(raw?.bikeRack),
   };
 };
 
@@ -217,7 +212,6 @@ const buildLineItems = (b) => [
   { name: "Windshield Coverage", value: b.windshield },
   { name: "Kitchen Kit", value: b.kitchenKit },
   { name: "Bedding Kit", value: b.beddingKit },
-  { name: "Bike Rack", value: b.bikeRack },
   { name: "Tax", value: b.tax },
 ];
 
@@ -295,7 +289,6 @@ const calculateRentalQuote = (payload) => {
   );
   const kitchenKit = calculateKitchenKit(sanitized.kitchenKit);
   const beddingKit = calculateBeddingKit(sanitized.beddingKitPeople);
-  const bikeRack = calculateBikeRack(sanitized.bikeRack);
 
   const subtotal = roundToTwo(dailyRateTotal + cdw);
   const totalBeforeTax = roundToTwo(
@@ -308,8 +301,7 @@ const calculateRentalQuote = (payload) => {
       cancellationWaiver +
       windshield +
       kitchenKit +
-      beddingKit +
-      bikeRack,
+      beddingKit,
   );
   const tax = roundToTwo(totalBeforeTax * TAX_RATE);
   const total = roundToTwo(totalBeforeTax + tax);
@@ -327,7 +319,6 @@ const calculateRentalQuote = (payload) => {
     windshield: roundToTwo(windshield),
     kitchenKit: roundToTwo(kitchenKit),
     beddingKit: roundToTwo(beddingKit),
-    bikeRack: roundToTwo(bikeRack),
     tax: roundToTwo(tax),
   };
 
