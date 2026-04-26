@@ -1,6 +1,6 @@
 const assert = require("node:assert");
 const { addDays, differenceInCalendarDays, format, isValid, parseISO } = require("date-fns");
-const { roundToTwo, getSeason, mmdd, inSeasonRange } = require("../utils/pricingUtils");
+const { roundToTwo, getSeason, mmdd, inSeasonRange, formatCurrency } = require("../utils/pricingUtils");
 
 const pricingConfig = require("../config/rentalPricing.json");
 const {

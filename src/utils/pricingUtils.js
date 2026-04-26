@@ -60,9 +60,15 @@ function getSeason(date) {
   return "ECONOMY";
 }
 
+/**
+ * Format a number as currency
+ */
+const formatCurrency = (value) => `$${roundToTwo(value).toFixed(2)}`;
+
 module.exports = {
   roundToTwo,
   getSeason,
   mmdd,
   inSeasonRange,
+  formatCurrency,
 };
