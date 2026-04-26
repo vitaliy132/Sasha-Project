@@ -163,17 +163,6 @@ const toNonNegativeInteger = (value, defaultValue = 0) => {
   return n;
 };
 
-const VALID_VEHICLE_TYPES = ["classA", "classB", "classC", "trailer"];
-const BIKE_RACK_FEE = Number(ADD_ONS.bikeRack?.perTrip ?? 50);
-const WINTERIZATION_FEES = {
-  classA: 199.95,
-  classB: 149.95,
-  classC: 149.95,
-  trailer: 149.95,
-};
-const SECURITY_DEPOSIT = 3000;
-const AWNING_DEPOSIT = 1000;
-
 const sanitizePayload = (raw) => {
   const vt = raw?.vehicleType;
   const vehicleType = VALID_VEHICLE_TYPES.includes(vt) ? vt : "classC";
