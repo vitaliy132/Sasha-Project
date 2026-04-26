@@ -98,7 +98,8 @@ describe("API", () => {
       assert.strictEqual(body.totalFormatted, "$1348.20");
       assert.ok(body.summaryMessage.includes("Your estimated total for this rental is $1348.20."));
       assert.ok(body.summaryMessage.includes("CDW Plus"));
-      assert.ok(body.summaryMessage.includes("A $3000 security deposit is required."));
+      assert.ok(body.summaryMessage.includes("A $3000 security deposit is required on all rentals."));
+      assert.ok(body.summaryMessage.includes("An additional $1000 awning deposit applies if awning use is selected."));
       assert.strictEqual(body.breakdown.days, 5);
       assert.strictEqual(body.breakdown.dailyRateTotal, 470);
       assert.strictEqual(body.breakdown.cdw, 210);
@@ -135,8 +136,8 @@ describe("API", () => {
       assert.strictEqual(body.breakdown.dailyRateTotal, 289 * 5);
       assert.strictEqual(body.breakdown.cdw, 210);
       assert.strictEqual(body.breakdown.prepFee, 199);
-      assert.ok(body.summaryMessage.includes("minimum of 5 days"));
       assert.ok(body.summaryMessage.includes("CDW Plus"));
+      assert.ok(body.summaryMessage.includes("A $3000 security deposit is required on all rentals."));
     });
 
     it("returns 400 when vehicleModel is missing", async () => {

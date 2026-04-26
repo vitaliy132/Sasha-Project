@@ -6,6 +6,13 @@ const TRAILER_HITCH_FEE = 150;
 const MINIMUM_RENTAL_DAYS = 5;
 const CDW_DAILY_RATE = 30;
 const CDW_MINIMUM = 210;
+const BIKE_RACK_FEE = 50;
+const WINTERIZATION_FEES = {
+  class_a: 199.95,
+  class_b: 149.95,
+  class_c: 149.95,
+  trailer: 149.95,
+};
 const kmPackagePrice = 350;
 const additionalKmRate = 0.41;
 
@@ -310,9 +317,36 @@ function calculateWindshieldCoverage(unitType, numDays, enabled) {
  * @returns {number}
  */
 function calculateGenerator(generatorUsage, numDays) {
-  // Do NOT include generator hourly cost in estimate
-  // Billing handled after return
-  // Only store selection flag if needed
+  if (!generatorUsage || !generatorUsage.type) return 0;
+
+  const usageType = String(generatorUsage.type).toLowerCase();
+  const hours = Number(generatorUsage.value) || 0;
+
+  if (usageType === "dailyunlimited" || usageType === "daily") {
+    return roundToTwo(60 * numDays);
+  }
+
+  if (usageType === "hourly") {
+    return roundToTwo(hours * 5);
+  }
+
+  return 0;
+}
+
+function calculateWinterizationFee(startDate, endDate, unitType) {
+  const isWinterDate = (date) => {
+    const key = mmdd(date);
+    return key >= "10-15" || key <= "04-30";
+  };
+
+  let current = startDate;
+  while (current <= endDate) {
+    if (isWinterDate(current)) {
+      return roundToTwo(WINTERIZATION_FEES[unitType] || 0);
+    }
+    current = addDays(current, 1);
+  }
+
   return 0;
 }
 
@@ -356,8 +390,8 @@ function calculateMileageCost(mileageOptions, numDays, unitType) {
 /**
  * Calculate trailer hitch fee if applicable
  */
-function calculateHitchFee(unitType) {
-  if (unitType === "trailer") {
+function calculateHitchFee(unitType, hasOwnHitch = false) {
+  if (unitType === "trailer" && !hasOwnHitch) {
     return roundToTwo(TRAILER_HITCH_FEE);
   }
   return 0;
@@ -383,6 +417,8 @@ function calculatePrice(params) {
     cancellationWaiver = false,
     windshieldCoverage = false,
     generator,
+    bikeRack = false,
+    hasOwnHitch = false,
   } = params;
 
   // === VALIDATION ===
@@ -446,12 +482,28 @@ function calculatePrice(params) {
   // 8. Generator (optional)
   const generatorCost = calculateGenerator(generator, days);
 
-  // 9. Trailer hitch fee (only for trailers)
-  const hitchFee = calculateHitchFee(effectiveUnitType);
+  // 9. Trailer hitch fee (only for trailers and only when needed)
+  const hitchFee = calculateHitchFee(effectiveUnitType, hasOwnHitch);
+
+  // 10. Bike rack (optional)
+  const bikeRackCost = bikeRack ? roundToTwo(BIKE_RACK_FEE) : 0;
+
+  // 11. Winterization fee (seasonal)
+  const winterizationFee = calculateWinterizationFee(start, end, effectiveUnitType);
 
   // === SUBTOTAL (before tax) ===
   const subtotal = roundToTwo(
-    basePrice + cdw + preparationFee + mileageCost + vipCDW + cancellation + windshield + generatorCost + hitchFee
+    basePrice +
+      cdw +
+      preparationFee +
+      mileageCost +
+      vipCDW +
+      cancellation +
+      windshield +
+      generatorCost +
+      hitchFee +
+      bikeRackCost +
+      winterizationFee
   );
 
   // === TAX ===
@@ -487,6 +539,8 @@ function calculatePrice(params) {
     windshieldCoverage: roundToTwo(windshield),
     generatorCost: roundToTwo(generatorCost),
     hitchFee: roundToTwo(hitchFee),
+    bikeRackCost: roundToTwo(bikeRackCost),
+    winterizationFee: roundToTwo(winterizationFee),
 
     // Totals
     subtotal,

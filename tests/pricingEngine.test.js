@@ -12,6 +12,7 @@ const {
   calculateCDW,
   getPreparationFee,
   calculateMileageCost,
+  calculateGenerator,
   calculateHitchFee,
   validateUnit,
   roundToTwo,
@@ -172,6 +173,10 @@ describe("calculateHitchFee() - Trailer Fee", () => {
     assert.strictEqual(calculateHitchFee("trailer"), 150);
   });
 
+  it("trailer with own hitch: 0", () => {
+    assert.strictEqual(calculateHitchFee("trailer", true), 0);
+  });
+
   it("class_a: 0", () => {
     assert.strictEqual(calculateHitchFee("class_a"), 0);
   });
@@ -182,6 +187,16 @@ describe("calculateHitchFee() - Trailer Fee", () => {
 
   it("class_c: 0", () => {
     assert.strictEqual(calculateHitchFee("class_c"), 0);
+  });
+});
+
+describe("calculateGenerator() - Generator Pricing", () => {
+  it("hourly rate: 10 hours = $50", () => {
+    assert.strictEqual(calculateGenerator({ type: "hourly", value: 10 }, 5), 50);
+  });
+
+  it("daily unlimited: 5 days = $300", () => {
+    assert.strictEqual(calculateGenerator({ type: "dailyUnlimited" }, 5), 300);
   });
 });
 
@@ -252,11 +267,12 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
     assert.strictEqual(result.preparationFee, 149);
     assert.strictEqual(result.mileageCost, 0);
     assert.strictEqual(result.hitchFee, 0);
+    assert.strictEqual(result.winterizationFee, 149.95);
     
-    // subtotal = 470 + 210 + 149 = 829
-    assert.strictEqual(result.subtotal, 829);
-    // tax = 829 * 0.13 = 107.77
-    assert.strictEqual(result.tax, roundToTwo(829 * 0.13));
+    // subtotal = 470 + 210 + 149 + 149.95 = 978.95
+    assert.strictEqual(result.subtotal, 978.95);
+    // tax = 978.95 * 0.13 = 127.26
+    assert.strictEqual(result.tax, roundToTwo(978.95 * 0.13));
     // total with tax
     assert.ok(result.totalFormatted.startsWith("$"));
   });
@@ -305,6 +321,41 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
     assert.strictEqual(result.basePrice, 94 * 5); // Daily rate for this trailer
   });
 
+  it("TRAILER: does not charge hitch when own hitch is available", () => {
+    const result = calculatePrice({
+      unitType: "trailer",
+      unitModel: "27ft_bunks_2024",
+      startDate: "2026-01-05",
+      endDate: "2026-01-09",
+      hasOwnHitch: true,
+    });
+
+    assert.strictEqual(result.hitchFee, 0);
+  });
+
+  it("BIKE RACK: adds $50 when selected", () => {
+    const result = calculatePrice({
+      unitType: "class_c",
+      unitModel: "25ft_slideout_2021_2023",
+      startDate: "2026-01-05",
+      endDate: "2026-01-09",
+      bikeRack: true,
+    });
+
+    assert.strictEqual(result.bikeRackCost, 50);
+  });
+
+  it("WINTERIZATION: applies seasonal fee for winter rentals", () => {
+    const result = calculatePrice({
+      unitType: "class_c",
+      unitModel: "25ft_slideout_2021_2023",
+      startDate: "2026-10-15",
+      endDate: "2026-10-20",
+    });
+
+    assert.strictEqual(result.winterizationFee, 149.95);
+  });
+
   it("WITH MILEAGE PACKAGE: adds fixed cost once (NOT per day)", () => {
     const result = calculatePrice({
       unitType: "class_c",
@@ -316,7 +367,9 @@ describe("calculatePrice() - Full Pricing Workflow", () => {
 
     assert.strictEqual(result.mileageCost, 350); // 1 * 350
     // Verify it's not multiplied by days
-      assert.strictEqual(result.basePrice, 94 * 5);
+    assert.strictEqual(result.basePrice, 94 * 5);
+  });
+
   it("WITH MILEAGE PER_KM: does not calculate extra kms (handled at drop-off)", () => {
     const result = calculatePrice({
       unitType: "class_c",
@@ -480,8 +533,6 @@ describe("rounding & Precision", () => {
     assert.ok(allMatch2Decimals(result.total));
     assert.ok(allMatch2Decimals(result.tax));
   });
-});
-
 });
 
 console.log("\nAll pricing engine tests passed!");

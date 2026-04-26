@@ -23,6 +23,7 @@ module.exports = Joi.object({
   kitchenKit: Joi.boolean().optional().default(false),
   beddingKitPeople: Joi.number().integer().min(0).optional().default(0),
   bikeRack: Joi.boolean().optional().default(false),
+  hasOwnHitch: Joi.boolean().optional().default(false),
 })
   .custom((value, helpers) => {
     const start = parseISO(value.startDate);

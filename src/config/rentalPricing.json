@@ -67,7 +67,7 @@
       "perPerson": 35
     },
     "bikeRack": {
-      "perTrip": 0
+      "perTrip": 50
     }
   },
   "defaults": {

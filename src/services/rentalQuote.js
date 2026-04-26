@@ -158,6 +158,33 @@ const calculateGenerator = (generatorDailyUnlimited, generatorHours, billedDayCo
   return roundToTwo(toNonNegativeNumber(generatorHours, 0) * ADD_ONS.generator.hourly);
 };
 
+const isWinterizationRequired = (startDate, endDate) => {
+  const startKey = format(startDate, "MM-dd");
+  const endKey = format(endDate, "MM-dd");
+  const includesWinterDay = (date) => {
+    const key = format(date, "MM-dd");
+    return key >= "10-15" || key <= "04-30";
+  };
+
+  if (includesWinterDay(startDate) || includesWinterDay(endDate)) {
+    return true;
+  }
+
+  // If the rental spans the boundary between April and October, any overlap with the winter range is handled above.
+  let current = startDate;
+  while (current < endDate) {
+    if (includesWinterDay(current)) return true;
+    current = addDays(current, 1);
+  }
+  return includesWinterDay(endDate);
+};
+
+const calculateWinterizationFee = (vehicleType, startDate, endDate) => {
+  if (!isWinterizationRequired(startDate, endDate)) return 0;
+  const fee = WINTERIZATION_FEES[vehicleType] ?? 0;
+  return roundToTwo(fee);
+};
+
 const toFiniteNumber = (value, defaultValue = 0) => {
   const n = Number(value);
   return Number.isFinite(n) ? n : defaultValue;
@@ -175,6 +202,15 @@ const toNonNegativeInteger = (value, defaultValue = 0) => {
 };
 
 const VALID_VEHICLE_TYPES = ["classA", "classB", "classC", "trailer"];
+const BIKE_RACK_FEE = Number(ADD_ONS.bikeRack?.perTrip ?? 50);
+const WINTERIZATION_FEES = {
+  classA: 199.95,
+  classB: 149.95,
+  classC: 149.95,
+  trailer: 149.95,
+};
+const SECURITY_DEPOSIT = 3000;
+const AWNING_DEPOSIT = 1000;
 
 const sanitizePayload = (raw) => {
   const vt = raw?.vehicleType;
@@ -197,43 +233,36 @@ const sanitizePayload = (raw) => {
     generatorHours: toNonNegativeNumber(raw?.generatorHours, 0),
     kitchenKit: Boolean(raw?.kitchenKit),
     beddingKitPeople: toNonNegativeInteger(raw?.beddingKitPeople, 0),
+    bikeRack: Boolean(raw?.bikeRack),
+    hasOwnHitch: Boolean(raw?.hasOwnHitch),
   };
 };
 
-const buildLineItems = (b) => [
-  { name: "Daily Rental", value: b.dailyRateTotal },
-  { name: "CDW", value: b.cdw },
-  { name: "Prep Fee", value: b.prepFee },
-  { name: "KM Packages", value: b.kmPackages },
-  { name: "Hitch", value: b.hitch },
-  { name: "Extra KM", value: b.extraKm },
-  { name: "Generator", value: b.generator },
-  { name: "Cancellation Waiver", value: b.cancellationWaiver },
-  { name: "Windshield Coverage", value: b.windshield },
-  { name: "Kitchen Kit", value: b.kitchenKit },
-  { name: "Bedding Kit", value: b.beddingKit },
-  { name: "Tax", value: b.tax },
-];
+const buildLineItems = (b) => {
+  const items = [
+    { name: "Daily Rental", value: b.dailyRateTotal },
+    { name: "CDW", value: b.cdw },
+    { name: "Prep Fee", value: b.prepFee },
+    { name: "KM Packages", value: b.kmPackages },
+    { name: "Hitch", value: b.hitch },
+    { name: "Extra KM", value: b.extraKm },
+    { name: "Generator", value: b.generator },
+    { name: "Cancellation Waiver", value: b.cancellationWaiver },
+    { name: "Windshield Coverage", value: b.windshield },
+    { name: "Kitchen Kit", value: b.kitchenKit },
+    { name: "Bedding Kit", value: b.beddingKit },
+    { name: "Tax", value: b.tax },
+  ];
 
-const buildSummaryMessage = ({ total, vehicleType, calendarDays }) => {
-  let summary =
-    `Your estimated total for this rental is ${formatCurrency(total)}. ` +
-    "This includes the daily rental rate, preparation fee, kilometer packages where applicable, taxes, a full tank of propane, and a full demonstration of the vehicle.";
+  if (b.bikeRack > 0) items.splice(5, 0, { name: "Bike Rack", value: b.bikeRack });
+  if (b.winterization > 0) items.splice(6, 0, { name: "Winterization", value: b.winterization });
 
-  if (vehicleType === "trailer") {
-    summary +=
-      " Please note: You must have a properly rated tow vehicle with hitch receiver, brake controller, and electrical adaptor installed.";
-  }
-
-  if (calendarDays < MIN_CHARGE_DAYS_FOR_DAILY_RATE) {
-    summary += ` Base daily rates are charged for a minimum of ${MIN_CHARGE_DAYS_FOR_DAILY_RATE} days even when your selected dates are shorter.`;
-  }
-
-  summary +=
-    " CDW Plus (Collision Damage Waiver) is included in the total shown above, as listed in the breakdown.";
-  summary += " A $3000 security deposit is required.";
-  return summary;
+  return items;
 };
+
+const buildSummaryMessage = ({ total }) =>
+  `Your estimated total for this rental is ${formatCurrency(total)}. As indicated below, this includes the daily rental rate, preparation fee, kilometer packages where applicable, taxes, a full tank of propane, CDW Plus (Collision Damage Waiver), and a full demonstration of the vehicle. Please note: You must have a properly rated tow vehicle with hitch receiver, brake controller, and electrical adaptor installed. A $3000 security deposit is required on all rentals. An additional $1000 awning deposit applies if awning use is selected.`;
+
 
 /**
  * @param {object} payload
@@ -274,12 +303,22 @@ const calculateRentalQuote = (payload) => {
 
   const prepFee = roundToTwo(getPrepFee(sanitized.vehicleType));
   const kmPackagesCost = roundToTwo(sanitized.kmPackages * KM_PACKAGE_RATE);
-  const hitch = roundToTwo(sanitized.vehicleType === "trailer" ? TRAILER_HITCH_FEE : 0);
+  const bikeRack = sanitized.bikeRack ? roundToTwo(BIKE_RACK_FEE) : 0;
+  const hitch = roundToTwo(
+    sanitized.vehicleType === "trailer" && !sanitized.hasOwnHitch
+      ? TRAILER_HITCH_FEE
+      : 0,
+  );
   const extraKm = sanitized.vehicleType === "trailer" ? 0 : roundToTwo(sanitized.extraKm * EXTRA_KM_RATE);
   const generator = calculateGenerator(
     sanitized.generatorDailyUnlimited,
     sanitized.generatorHours,
     daysForDailyRateSum,
+  );
+  const winterization = calculateWinterizationFee(
+    sanitized.vehicleType,
+    startDate,
+    endDate,
   );
   const cancellationWaiver = calculateCancellationWaiver(sanitized.cancellationWaiver, days);
   const windshield = calculateWindshield(
@@ -296,6 +335,8 @@ const calculateRentalQuote = (payload) => {
       prepFee +
       kmPackagesCost +
       hitch +
+      bikeRack +
+      winterization +
       extraKm +
       generator +
       cancellationWaiver +
@@ -313,6 +354,8 @@ const calculateRentalQuote = (payload) => {
     prepFee: roundToTwo(prepFee),
     kmPackages: roundToTwo(kmPackagesCost),
     hitch: roundToTwo(hitch),
+    bikeRack: roundToTwo(bikeRack),
+    winterization: roundToTwo(winterization),
     extraKm: roundToTwo(extraKm),
     generator: roundToTwo(generator),
     cancellationWaiver: roundToTwo(cancellationWaiver),

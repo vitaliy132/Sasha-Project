@@ -78,6 +78,59 @@ describe("Trailer vs Class A pricing", () => {
     assert.strictEqual(q.breakdown.dailyRateTotal, 94 * 5);
   });
 
+  it("does not charge trailer hitch when customer has own hitch", () => {
+    const q = calculateRentalQuote({
+      startDate: "2026-01-05",
+      endDate: "2026-01-09",
+      vehicleType: "trailer",
+      vehicleModel: "27ft_bunks_2024",
+      kmPackages: 0,
+      extraKm: 0,
+      generatorHours: 0,
+      cancellationWaiver: false,
+      windshieldCoverage: false,
+      generatorDailyUnlimited: false,
+      hasOwnHitch: true,
+    });
+
+    assert.strictEqual(q.breakdown.hitch, 0);
+  });
+
+  it("charges bike rack only when selected", () => {
+    const q = calculateRentalQuote({
+      startDate: "2026-01-05",
+      endDate: "2026-01-09",
+      vehicleType: "classC",
+      vehicleModel: "25ft_slideout_2021_2023",
+      kmPackages: 0,
+      extraKm: 0,
+      generatorHours: 0,
+      cancellationWaiver: false,
+      windshieldCoverage: false,
+      generatorDailyUnlimited: false,
+      bikeRack: true,
+    });
+
+    assert.strictEqual(q.breakdown.bikeRack, 50);
+  });
+
+  it("applies winterization fee for dates within the winter range", () => {
+    const q = calculateRentalQuote({
+      startDate: "2026-10-15",
+      endDate: "2026-10-20",
+      vehicleType: "classC",
+      vehicleModel: "25ft_slideout_2021_2023",
+      kmPackages: 0,
+      extraKm: 0,
+      generatorHours: 0,
+      cancellationWaiver: false,
+      windshieldCoverage: false,
+      generatorDailyUnlimited: false,
+    });
+
+    assert.strictEqual(q.breakdown.winterization, 149.95);
+  });
+
   it("uses Class A prep and Class A model rates", () => {
     const q = calculateRentalQuote({
       startDate: "2026-01-05",
