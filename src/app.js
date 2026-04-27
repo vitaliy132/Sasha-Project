@@ -84,7 +84,6 @@ app.get("/api/smtp-check", async (req, res) => {
 
 app.use("/api/leads", require("./routes/leads"));
 // DEPRECATED: /calculate endpoint replaced by /calculate-rental
-// app.use("/calculate", require("./routes/pricing"));
 app.use("/calculate-rental", require("./routes/rental"));
 app.use("/submit-lead", require("./routes/submitLead"));
 app.use("/api", require("./routes/availability"));
