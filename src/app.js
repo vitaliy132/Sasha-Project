@@ -219,7 +219,7 @@ app.get("/api/mailersend-smtp-check", async (req, res) => {
   }
   try {
     const nodemailer = require("nodemailer");
-    const testTransporter = nodemailer.createTransporter({
+    const testTransporter = nodemailer.createTransport({
       host: process.env.MAILERSEND_SMTP_HOST || "smtp.mailersend.net",
       port: Number(process.env.MAILERSEND_SMTP_PORT || 587),
       secure: (process.env.MAILERSEND_SMTP_PORT || 587) === 465,
