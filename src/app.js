@@ -19,6 +19,10 @@ const OPTIONAL_ENV = [
   "SENDGRID_FROM",
   "MAILERSEND_API_KEY",
   "MAILERSEND_FROM",
+  "MAILERSEND_SMTP_HOST",
+  "MAILERSEND_SMTP_PORT",
+  "MAILERSEND_SMTP_USER",
+  "MAILERSEND_SMTP_PASS",
 ];
 const hasEnv = (key) => !!process.env[key]?.trim();
 
@@ -69,16 +73,18 @@ app.get("/api/env-check", (req, res) => {
   const optional = Object.fromEntries(OPTIONAL_ENV.map((key) => [key, hasEnv(key)]));
   const allRequired = REQUIRED_ENV.every((key) => required[key]);
   const sendgridConfigured = hasEnv("SENDGRID_API_KEY") && hasEnv("SENDGRID_FROM");
-  const mailersendConfigured = hasEnv("MAILERSEND_API_KEY") && hasEnv("MAILERSEND_FROM");
+  const mailersendAPIConfigured = hasEnv("MAILERSEND_API_KEY") && hasEnv("MAILERSEND_FROM");
+  const mailersendSMTPConfigured = hasEnv("MAILERSEND_SMTP_USER") && hasEnv("MAILERSEND_SMTP_PASS");
   const smtpConfigured = hasEnv("SMTP_HOST") && hasEnv("SMTP_USER") && hasEnv("SMTP_PASS");
-  const emailProvider = mailersendConfigured ? "MailerSend" : sendgridConfigured ? "SendGrid" : smtpConfigured ? "SMTP" : "none";
+  const emailProvider = mailersendSMTPConfigured ? "MailerSend SMTP" : mailersendAPIConfigured ? "MailerSend API" : sendgridConfigured ? "SendGrid" : smtpConfigured ? "SMTP" : "none";
   res.json({
     ok: allRequired,
     required,
     optional,
     emailProvider,
     sendgridConfigured,
-    mailersendConfigured,
+    mailersendAPIConfigured,
+    mailersendSMTPConfigured,
     smtpConfigured,
     sheetsConfigured: OPTIONAL_ENV.slice(0, 4).every((key) => optional[key]),
   });
@@ -199,6 +205,53 @@ app.get("/api/mailersend-check", async (req, res) => {
       error: "MailerSend verification failed",
       message: err.response?.data?.message || err.message || "Unknown error",
       details: err.response?.data || null,
+    });
+  }
+});
+
+app.get("/api/mailersend-smtp-check", async (req, res) => {
+  if (!process.env.MAILERSEND_SMTP_USER || !process.env.MAILERSEND_SMTP_PASS) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      ok: false,
+      error: "MailerSend SMTP not configured",
+      message: "Set MAILERSEND_SMTP_USER and MAILERSEND_SMTP_PASS environment variables",
+    });
+  }
+  try {
+    const nodemailer = require("nodemailer");
+    const testTransporter = nodemailer.createTransporter({
+      host: process.env.MAILERSEND_SMTP_HOST || "smtp.mailersend.net",
+      port: Number(process.env.MAILERSEND_SMTP_PORT || 587),
+      secure: (process.env.MAILERSEND_SMTP_PORT || 587) === 465,
+      auth: {
+        user: process.env.MAILERSEND_SMTP_USER,
+        pass: process.env.MAILERSEND_SMTP_PASS,
+      },
+    });
+
+    await testTransporter.sendMail({
+      from: `"ManyChat Leads" <${process.env.MAILERSEND_SMTP_USER}>`,
+      to: process.env.CRM_EMAIL,
+      subject: "MailerSend SMTP Configuration Test",
+      text: "If you see this, MailerSend SMTP is configured correctly.",
+      html: "<p>If you see this, MailerSend SMTP is configured correctly.</p>",
+    });
+
+    return res.json({
+      ok: true,
+      message: "MailerSend SMTP test email sent successfully",
+      from: process.env.MAILERSEND_SMTP_USER,
+      to: process.env.CRM_EMAIL,
+      host: process.env.MAILERSEND_SMTP_HOST || "smtp.mailersend.net",
+      port: process.env.MAILERSEND_SMTP_PORT || 587,
+    });
+  } catch (err) {
+    logger.error("MailerSend SMTP check failed:", err.message || err);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      ok: false,
+      error: "MailerSend SMTP verification failed",
+      message: err.message || "Unknown error",
+      code: err.code || null,
     });
   }
 });
