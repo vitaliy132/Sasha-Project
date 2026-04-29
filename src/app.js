@@ -17,12 +17,17 @@ const OPTIONAL_ENV = [
   "GOOGLE_PRIVATE_KEY",
   "SENDGRID_API_KEY",
   "SENDGRID_FROM",
+  "MAILERSEND_API_KEY",
+  "MAILERSEND_FROM",
 ];
 const hasEnv = (key) => !!process.env[key]?.trim();
 
 const missing = REQUIRED_ENV.filter((key) => !hasEnv(key));
 if (process.env.SENDGRID_API_KEY && !hasEnv("SENDGRID_FROM")) {
   missing.push("SENDGRID_FROM");
+}
+if (process.env.MAILERSEND_API_KEY && !hasEnv("MAILERSEND_FROM")) {
+  missing.push("MAILERSEND_FROM");
 }
 
 if (missing.length) {
@@ -64,14 +69,16 @@ app.get("/api/env-check", (req, res) => {
   const optional = Object.fromEntries(OPTIONAL_ENV.map((key) => [key, hasEnv(key)]));
   const allRequired = REQUIRED_ENV.every((key) => required[key]);
   const sendgridConfigured = hasEnv("SENDGRID_API_KEY") && hasEnv("SENDGRID_FROM");
+  const mailersendConfigured = hasEnv("MAILERSEND_API_KEY") && hasEnv("MAILERSEND_FROM");
   const smtpConfigured = hasEnv("SMTP_HOST") && hasEnv("SMTP_USER") && hasEnv("SMTP_PASS");
-  const emailProvider = sendgridConfigured ? "SendGrid" : smtpConfigured ? "SMTP" : "none";
+  const emailProvider = mailersendConfigured ? "MailerSend" : sendgridConfigured ? "SendGrid" : smtpConfigured ? "SMTP" : "none";
   res.json({
     ok: allRequired,
     required,
     optional,
     emailProvider,
     sendgridConfigured,
+    mailersendConfigured,
     smtpConfigured,
     sheetsConfigured: OPTIONAL_ENV.slice(0, 4).every((key) => optional[key]),
   });
@@ -133,6 +140,65 @@ app.get("/api/sendgrid-check", async (req, res) => {
       error: "SendGrid verification failed",
       message: err.message || "Unknown error",
       details: err.code || err.response?.body || null,
+    });
+  }
+});
+
+app.get("/api/mailersend-check", async (req, res) => {
+  if (!process.env.MAILERSEND_API_KEY) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      ok: false,
+      error: "MailerSend not configured",
+      message: "Set MAILERSEND_API_KEY and MAILERSEND_FROM environment variables",
+    });
+  }
+  if (!process.env.MAILERSEND_FROM) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      ok: false,
+      error: "MailerSend from address missing",
+      message: "Set MAILERSEND_FROM to a verified sender address in MailerSend",
+    });
+  }
+  try {
+    const axios = require("axios");
+    const response = await axios.post(
+      "https://api.mailersend.com/v1/email",
+      {
+        from: {
+          email: process.env.MAILERSEND_FROM,
+          name: "ManyChat Leads",
+        },
+        to: [
+          {
+            email: process.env.CRM_EMAIL,
+            name: "Sales Team",
+          },
+        ],
+        subject: "MailerSend Configuration Test",
+        text: "If you see this, MailerSend is configured correctly.",
+        html: "<p>If you see this, MailerSend is configured correctly.</p>",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.MAILERSEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return res.json({
+      ok: true,
+      message: "MailerSend test email sent successfully",
+      from: process.env.MAILERSEND_FROM,
+      to: process.env.CRM_EMAIL,
+      messageId: response.data?.message_id,
+    });
+  } catch (err) {
+    logger.error("MailerSend check failed:", err.response?.data || err.message || err);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      ok: false,
+      error: "MailerSend verification failed",
+      message: err.response?.data?.message || err.message || "Unknown error",
+      details: err.response?.data || null,
     });
   }
 });

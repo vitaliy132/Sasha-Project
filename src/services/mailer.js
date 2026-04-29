@@ -1,13 +1,15 @@
 const nodemailer = require("nodemailer");
 const sgMail = require("@sendgrid/mail");
+const axios = require("axios");
 
 const useSendGrid = !!process.env.SENDGRID_API_KEY;
-const FROM_ADDRESS = process.env.SENDGRID_FROM || process.env.SMTP_USER || process.env.CRM_EMAIL;
+const useMailerSend = !!process.env.MAILERSEND_API_KEY;
+const FROM_ADDRESS = process.env.SENDGRID_FROM || process.env.MAILERSEND_FROM || process.env.SMTP_USER || process.env.CRM_EMAIL;
 const FROM_NAME = "ManyChat Leads";
 
 if (!FROM_ADDRESS) {
   throw new Error(
-    "Email sender address is not configured. Set SENDGRID_FROM, SMTP_USER, or CRM_EMAIL."
+    "Email sender address is not configured. Set MAILERSEND_FROM, SENDGRID_FROM, SMTP_USER, or CRM_EMAIL."
   );
 }
 
@@ -26,7 +28,7 @@ const smtpTransporter = nodemailer.createTransport({
 });
 
 exports.verifySmtp = async () => {
-  if (useSendGrid) {
+  if (useSendGrid || useMailerSend) {
     return true;
   }
   return smtpTransporter.verify();
@@ -40,13 +42,37 @@ exports.sendLeadEmail = async (body, lead) => {
   const text = isStringBody ? body : body.text;
   const html = isStringBody ? undefined : body.html;
 
-  const mailOptions = {
-    from: `"ManyChat Leads" <${FROM_ADDRESS}>`,
-    to: process.env.CRM_EMAIL,
-    subject,
-    text,
-    ...(html ? { html } : {}),
-  };
+  if (useMailerSend) {
+    try {
+      const response = await axios.post(
+        "https://api.mailersend.com/v1/email",
+        {
+          from: {
+            email: FROM_ADDRESS,
+            name: FROM_NAME,
+          },
+          to: [
+            {
+              email: process.env.CRM_EMAIL,
+              name: "Sales Team",
+            },
+          ],
+          subject,
+          text,
+          html,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.MAILERSEND_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`MailerSend error: ${error.response?.data?.message || error.message}`);
+    }
+  }
 
   if (useSendGrid) {
     await sgMail.send({
@@ -61,6 +87,14 @@ exports.sendLeadEmail = async (body, lead) => {
     });
     return;
   }
+
+  const mailOptions = {
+    from: `"ManyChat Leads" <${FROM_ADDRESS}>`,
+    to: process.env.CRM_EMAIL,
+    subject,
+    text,
+    ...(html ? { html } : {}),
+  };
 
   await smtpTransporter.sendMail(mailOptions);
 };
