@@ -3,6 +3,13 @@ const sgMail = require("@sendgrid/mail");
 
 const useSendGrid = !!process.env.SENDGRID_API_KEY;
 const FROM_ADDRESS = process.env.SENDGRID_FROM || process.env.SMTP_USER || process.env.CRM_EMAIL;
+const FROM_NAME = "ManyChat Leads";
+
+if (!FROM_ADDRESS) {
+  throw new Error(
+    "Email sender address is not configured. Set SENDGRID_FROM, SMTP_USER, or CRM_EMAIL."
+  );
+}
 
 if (useSendGrid) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -44,7 +51,10 @@ exports.sendLeadEmail = async (body, lead) => {
   if (useSendGrid) {
     await sgMail.send({
       to: process.env.CRM_EMAIL,
-      from: FROM_ADDRESS,
+      from: {
+        email: FROM_ADDRESS,
+        name: FROM_NAME,
+      },
       subject,
       text,
       ...(html ? { html } : {}),
