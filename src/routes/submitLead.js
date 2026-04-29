@@ -62,6 +62,7 @@ router.post("/", asyncHandler(async (req, res) => {
     last_name,
     email: value.email.trim(),
     phone: value.phone.trim(),
+    address: value.address?.trim(),
     notes: notes || undefined,
     platform: "rental-calculator",
   };

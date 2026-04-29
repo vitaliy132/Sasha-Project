@@ -24,6 +24,7 @@ exports.formatLeadEmail = (lead) => {
     { label: "Last Name", value: lead.last_name },
     { label: "Email", value: lead.email },
     { label: "Phone", value: lead.phone },
+    { label: "Address", value: lead.address },
     { label: "Interest", value: lead.interest },
     { label: "Notes", value: lead.notes },
     { label: "Platform", value: lead.platform },
