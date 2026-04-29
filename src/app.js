@@ -222,13 +222,20 @@ app.get("/api/mailersend-smtp-check", async (req, res) => {
     const testTransporter = nodemailer.createTransport({
       host: process.env.MAILERSEND_SMTP_HOST || "smtp.mailersend.net",
       port: Number(process.env.MAILERSEND_SMTP_PORT || 587),
-      secure: (process.env.MAILERSEND_SMTP_PORT || 587) === 465,
+      secure: Number(process.env.MAILERSEND_SMTP_PORT || 587) === 465,
       auth: {
         user: process.env.MAILERSEND_SMTP_USER,
         pass: process.env.MAILERSEND_SMTP_PASS,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
+      tls: {
+        rejectUnauthorized: false,
+      },
     });
 
+    await testTransporter.verify();
     await testTransporter.sendMail({
       from: `"ManyChat Leads" <${process.env.MAILERSEND_SMTP_USER}>`,
       to: process.env.CRM_EMAIL,

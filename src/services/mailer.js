@@ -21,10 +21,16 @@ if (useSendGrid) {
 const smtpTransporter = nodemailer.createTransport({
   host: process.env.MAILERSEND_SMTP_HOST || process.env.SMTP_HOST,
   port: Number(process.env.MAILERSEND_SMTP_PORT || process.env.SMTP_PORT || 587),
-  secure: (process.env.MAILERSEND_SMTP_PORT || process.env.SMTP_PORT) === '465',
+  secure: Number(process.env.MAILERSEND_SMTP_PORT || process.env.SMTP_PORT || 587) === 465,
   auth: {
     user: process.env.MAILERSEND_SMTP_USER || process.env.SMTP_USER,
     pass: process.env.MAILERSEND_SMTP_PASS || process.env.SMTP_PASS,
+  },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
+  tls: {
+    rejectUnauthorized: false,
   },
 });
 
