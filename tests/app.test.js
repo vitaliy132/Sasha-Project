@@ -337,7 +337,7 @@ describe("Formatter", () => {
       notes: "Quote: $100",
     };
     const body = formatLeadEmail(lead);
-    assert.ok(body.startsWith("New Lead from Rental Calculator"));
+    assert.ok(body.text.startsWith("New Lead from Rental Calculator"));
   });
 
   it("formats lead email with required fields", () => {
@@ -349,9 +349,13 @@ describe("Formatter", () => {
       platform: "manychat",
     };
     const body = formatLeadEmail(lead);
-    assert.ok(body.includes("First Name: Jane"));
-    assert.ok(body.includes("Last Name: Doe"));
-    assert.ok(body.includes("Email: jane@example.com"));
+    assert.strictEqual(typeof body.text, "string");
+    assert.strictEqual(typeof body.html, "string");
+    assert.ok(body.text.includes("First Name: Jane"));
+    assert.ok(body.text.includes("Last Name: Doe"));
+    assert.ok(body.text.includes("Email: jane@example.com"));
+    assert.ok(body.html.includes("New Lead from ManyChat"));
+    assert.ok(body.html.includes("First Name</td>"));
   });
 
   it("omits empty optional fields", () => {
@@ -364,6 +368,7 @@ describe("Formatter", () => {
       notes: "",
     };
     const body = formatLeadEmail(lead);
-    assert.ok(body.includes("New Lead from ManyChat"));
+    assert.ok(body.text.includes("New Lead from ManyChat"));
+    assert.ok(!body.text.includes("Notes:"));
   });
 });

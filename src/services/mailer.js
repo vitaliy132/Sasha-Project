@@ -26,22 +26,31 @@ exports.verifySmtp = async () => {
 };
 
 exports.sendLeadEmail = async (body, lead) => {
-  const subject = `New Lead | ${lead.first_name} ${lead.last_name}`;
+  const isStringBody = typeof body === "string";
+  const subject = isStringBody
+    ? `New Lead | ${lead.first_name} ${lead.last_name}`.trim()
+    : body.subject || `New Lead | ${lead.first_name || ""} ${lead.last_name || ""}`.trim();
+  const text = isStringBody ? body : body.text;
+  const html = isStringBody ? undefined : body.html;
+
+  const mailOptions = {
+    from: `"ManyChat Leads" <${FROM_ADDRESS}>`,
+    to: process.env.CRM_EMAIL,
+    subject,
+    text,
+    ...(html ? { html } : {}),
+  };
 
   if (useSendGrid) {
     await sgMail.send({
       to: process.env.CRM_EMAIL,
       from: FROM_ADDRESS,
       subject,
-      text: body,
+      text,
+      ...(html ? { html } : {}),
     });
     return;
   }
 
-  await smtpTransporter.sendMail({
-    from: `"ManyChat Leads" <${process.env.SMTP_USER}>`,
-    to: process.env.CRM_EMAIL,
-    subject,
-    text: body,
-  });
+  await smtpTransporter.sendMail(mailOptions);
 };
