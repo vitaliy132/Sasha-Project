@@ -7,28 +7,12 @@ const morgan = require("morgan");
 const { HTTP_STATUS } = require("./utils/constants");
 const logger = require("./utils/logger");
 const { verifySmtp } = require("./services/mailer");
+const { validateRequiredEnv, getEnvSummary } = require("./utils/envValidator");
+
 const app = express();
 
-const REQUIRED_ENV = ["WEBHOOK_SECRET", "SMTP_HOST", "SMTP_USER", "SMTP_PASS", "CRM_EMAIL"];
-const OPTIONAL_ENV = [
-  "GOOGLE_SHEET_ID",
-  "GOOGLE_PROJECT_ID",
-  "GOOGLE_CLIENT_EMAIL",
-  "GOOGLE_PRIVATE_KEY",
-  "SENDGRID_API_KEY",
-  "SENDGRID_FROM",
-];
-const hasEnv = (key) => !!process.env[key]?.trim();
-
-const missing = REQUIRED_ENV.filter((key) => !hasEnv(key));
-if (process.env.SENDGRID_API_KEY && !hasEnv("SENDGRID_FROM")) {
-  missing.push("SENDGRID_FROM");
-}
-
-if (missing.length) {
-  logger.error("Missing required env:", [...new Set(missing)].join(", "));
-  process.exit(1);
-}
+// Validate required environment variables at startup
+validateRequiredEnv();
 
 app.use(helmet());
 app.use(cors());
@@ -58,6 +42,10 @@ app.get("/", (req, res) => {
 });
 
 app.get("/health", (req, res) => res.status(HTTP_STATUS.OK).send("OK"));
+
+app.get("/api/env-check", (req, res) => {
+  res.json(getEnvSummary());
+});
 
 app.get("/api/env-check", (req, res) => {
   const required = Object.fromEntries(REQUIRED_ENV.map((key) => [key, hasEnv(key)]));
