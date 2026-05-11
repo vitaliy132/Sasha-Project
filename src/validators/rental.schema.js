@@ -17,7 +17,10 @@ module.exports = Joi.object({
   cancellationWaiver: Joi.boolean().optional().default(false),
   windshieldCoverage: Joi.boolean().optional().default(false),
   generatorDailyUnlimited: Joi.boolean().optional().default(false),
+  /** Count of prepaid 1,000 km packages ($350 each per PDF) */
   kmPackages: Joi.number().integer().min(0).required(),
+  /** Count of prepaid 100 km packages ($39 each per PDF) */
+  kmPackages100: Joi.number().integer().min(0).optional().default(0),
   generatorHours: Joi.number().min(0).optional().default(0),
   extraKm: Joi.number().min(0).optional().default(0),
   kitchenKit: Joi.boolean().optional().default(false),

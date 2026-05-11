@@ -39,7 +39,7 @@ describe("Cross-season daily total", () => {
     const q = calculateRentalQuote({
       startDate: "2026-06-28",
       endDate: "2026-07-02",
-      vehicleType: "classC",
+      vehicleType: "classA",
       vehicleModel: "25ft_slideout_2021_2023",
       kmPackages: 0,
       extraKm: 0,
@@ -100,7 +100,7 @@ describe("Trailer vs Class A pricing", () => {
     const q = calculateRentalQuote({
       startDate: "2026-01-05",
       endDate: "2026-01-09",
-      vehicleType: "classC",
+      vehicleType: "classA",
       vehicleModel: "25ft_slideout_2021_2023",
       kmPackages: 0,
       extraKm: 0,
@@ -118,7 +118,7 @@ describe("Trailer vs Class A pricing", () => {
     const q = calculateRentalQuote({
       startDate: "2026-10-15",
       endDate: "2026-10-20",
-      vehicleType: "classC",
+      vehicleType: "classA",
       vehicleModel: "25ft_slideout_2021_2023",
       kmPackages: 0,
       extraKm: 0,
@@ -128,7 +128,7 @@ describe("Trailer vs Class A pricing", () => {
       generatorDailyUnlimited: false,
     });
 
-    assert.strictEqual(q.breakdown.winterization, 149.95);
+    assert.strictEqual(q.breakdown.winterization, 199.95);
   });
 
   it("uses Class A prep and Class A model rates", () => {
@@ -154,7 +154,7 @@ describe("CDW minimum vs per-day", () => {
     const q = calculateRentalQuote({
       startDate: "2026-01-01",
       endDate: "2026-01-03",
-      vehicleType: "classC",
+      vehicleType: "classA",
       vehicleModel: "25ft_slideout_2021_2023",
       kmPackages: 0,
       extraKm: 0,
@@ -170,7 +170,7 @@ describe("CDW minimum vs per-day", () => {
     const q = calculateRentalQuote({
       startDate: "2026-01-01",
       endDate: "2026-01-12",
-      vehicleType: "classC",
+      vehicleType: "classA",
       vehicleModel: "25ft_slideout_2021_2023",
       kmPackages: 0,
       extraKm: 0,
@@ -188,7 +188,7 @@ describe("Cancellation waiver caps", () => {
     const q = calculateRentalQuote({
       startDate: "2026-01-01",
       endDate: "2026-01-03",
-      vehicleType: "classC",
+      vehicleType: "classA",
       vehicleModel: "25ft_slideout_2021_2023",
       kmPackages: 0,
       extraKm: 0,
@@ -204,7 +204,7 @@ describe("Cancellation waiver caps", () => {
     const q = calculateRentalQuote({
       startDate: "2026-01-01",
       endDate: "2026-01-20",
-      vehicleType: "classC",
+      vehicleType: "classA",
       vehicleModel: "25ft_slideout_2021_2023",
       kmPackages: 0,
       extraKm: 0,
@@ -253,12 +253,12 @@ describe("Windshield coverage caps", () => {
     assert.strictEqual(q.breakdown.windshield, 1000);
   });
 
-  it("Class C: caps at $450", () => {
+  it("Class B (non–Class-A tier): windshield caps at $450", () => {
     const q = calculateRentalQuote({
       startDate: "2026-01-01",
       endDate: "2026-02-15",
-      vehicleType: "classC",
-      vehicleModel: "25ft_slideout_2021_2023",
+      vehicleType: "classB",
+      vehicleModel: "23ft_2021_2023",
       kmPackages: 0,
       extraKm: 0,
       generatorHours: 0,
@@ -275,7 +275,7 @@ describe("Generator: hourly vs daily unlimited", () => {
     const q = calculateRentalQuote({
       startDate: "2026-01-01",
       endDate: "2026-01-05",
-      vehicleType: "classC",
+      vehicleType: "classA",
       vehicleModel: "25ft_slideout_2021_2023",
       kmPackages: 0,
       extraKm: 0,
@@ -291,7 +291,7 @@ describe("Generator: hourly vs daily unlimited", () => {
     const q = calculateRentalQuote({
       startDate: "2026-01-01",
       endDate: "2026-01-03",
-      vehicleType: "classC",
+      vehicleType: "classA",
       vehicleModel: "25ft_slideout_2021_2023",
       kmPackages: 0,
       extraKm: 0,
@@ -304,6 +304,42 @@ describe("Generator: hourly vs daily unlimited", () => {
   });
 });
 
+describe("Prepaid mileage packages (PDF: $39 / 100 km, $350 / 1,000 km)", () => {
+  it("charges $39 per 100 km package", () => {
+    const q = calculateRentalQuote({
+      startDate: "2026-01-01",
+      endDate: "2026-01-05",
+      vehicleType: "classA",
+      vehicleModel: "30ft_2024",
+      kmPackages: 0,
+      kmPackages100: 2,
+      extraKm: 0,
+      generatorHours: 0,
+      cancellationWaiver: false,
+      windshieldCoverage: false,
+      generatorDailyUnlimited: false,
+    });
+    assert.strictEqual(q.breakdown.kmPackages, 78);
+  });
+
+  it("combines 100 km and 1,000 km package counts", () => {
+    const q = calculateRentalQuote({
+      startDate: "2026-01-01",
+      endDate: "2026-01-05",
+      vehicleType: "classA",
+      vehicleModel: "30ft_2024",
+      kmPackages: 1,
+      kmPackages100: 3,
+      extraKm: 0,
+      generatorHours: 0,
+      cancellationWaiver: false,
+      windshieldCoverage: false,
+      generatorDailyUnlimited: false,
+    });
+    assert.strictEqual(q.breakdown.kmPackages, 3 * 39 + 350);
+  });
+});
+
 describe("Unknown model / type", () => {
   it("throws 400 for unknown model", () => {
     assert.throws(
@@ -311,7 +347,7 @@ describe("Unknown model / type", () => {
         calculateRentalQuote({
           startDate: "2026-01-01",
           endDate: "2026-01-05",
-          vehicleType: "classC",
+          vehicleType: "classB",
           vehicleModel: "does_not_exist",
           kmPackages: 0,
           extraKm: 0,

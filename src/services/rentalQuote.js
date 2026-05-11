@@ -8,7 +8,8 @@ const {
   MIN_CHARGE_DAYS_FOR_DAILY_RATE,
   CDW_DAILY_RATE,
   CDW_MINIMUM,
-  KM_PACKAGE_RATE,
+  KM_PACKAGE_100KM_RATE,
+  KM_PACKAGE_1000KM_RATE,
   TRAILER_HITCH_FEE,
   EXTRA_KM_RATE,
   GENERATOR_HOUR_RATE,
@@ -167,7 +168,7 @@ const toNonNegativeInteger = (value, defaultValue = 0) => {
 
 const sanitizePayload = (raw) => {
   const vt = raw?.vehicleType;
-  const vehicleType = VALID_VEHICLE_TYPES.includes(vt) ? vt : "classC";
+  const vehicleType = VALID_VEHICLE_TYPES.includes(vt) ? vt : "classA";
 
   const defaultModel = defaults?.vehicleModelByType?.[vehicleType] || "";
   const rawModel = typeof raw?.vehicleModel === "string" ? raw.vehicleModel.trim() : "";
@@ -182,6 +183,7 @@ const sanitizePayload = (raw) => {
     windshieldCoverage: Boolean(raw?.windshieldCoverage),
     generatorDailyUnlimited: Boolean(raw?.generatorDailyUnlimited),
     kmPackages: toNonNegativeInteger(raw?.kmPackages, 0),
+    kmPackages100: toNonNegativeInteger(raw?.kmPackages100, 0),
     extraKm: toNonNegativeInteger(raw?.extraKm, 0),
     generatorHours: toNonNegativeNumber(raw?.generatorHours, 0),
     kitchenKit: Boolean(raw?.kitchenKit),
@@ -263,7 +265,9 @@ const calculateRentalQuote = (payload) => {
   const cdw = calculateCDW(days);
 
   const prepFee = roundToTwo(getPrepFee(sanitized.vehicleType));
-  const kmPackagesCost = roundToTwo(sanitized.kmPackages * KM_PACKAGE_RATE);
+  const kmPackagesCost = roundToTwo(
+    sanitized.kmPackages100 * KM_PACKAGE_100KM_RATE + sanitized.kmPackages * KM_PACKAGE_1000KM_RATE,
+  );
   const bikeRack = sanitized.bikeRack ? roundToTwo(BIKE_RACK_FEE) : 0;
   const hitch = roundToTwo(
     sanitized.vehicleType === "trailer" && !sanitized.hasOwnHitch
@@ -356,6 +360,7 @@ function runRentalQuoteValidationTests(options = {}) {
   const base = (over) => ({
     vehicleModel: "25ft_slideout_2021_2023",
     kmPackages: 0,
+    kmPackages100: 0,
     extraKm: 0,
     generatorHours: 0,
     cancellationWaiver: false,
@@ -364,12 +369,12 @@ function runRentalQuoteValidationTests(options = {}) {
     ...over,
   });
 
-  run("CASE 1: 3 calendar days, CDW on, Class C economy daily min 5 days", (lg) => {
+  run("CASE 1: 3 calendar days, CDW on, Class A economy daily min 5 days", (lg) => {
     const q = calculateRentalQuote(
       base({
         startDate: "2026-01-01",
         endDate: "2026-01-03",
-        vehicleType: "classC",
+        vehicleType: "classA",
       }),
     );
     lg(JSON.stringify(q.breakdown, null, 2));
@@ -383,7 +388,7 @@ function runRentalQuoteValidationTests(options = {}) {
       base({
         startDate: "2026-07-01",
         endDate: "2026-07-07",
-        vehicleType: "classC",
+        vehicleType: "classA",
       }),
     );
     lg(JSON.stringify(q.breakdown, null, 2));
@@ -431,7 +436,7 @@ function runRentalQuoteValidationTests(options = {}) {
       base({
         startDate: "2026-01-01",
         endDate: "2026-01-05",
-        vehicleType: "classC",
+        vehicleType: "classA",
         extraKm: 10000,
         generatorHours: 100,
       }),
@@ -446,8 +451,9 @@ function runRentalQuoteValidationTests(options = {}) {
       base({
         startDate: "2026-02-01",
         endDate: "2026-02-07",
-        vehicleType: "classC",
+        vehicleType: "classA",
         kmPackages: null,
+        kmPackages100: null,
         extraKm: "",
         generatorHours: undefined,
       }),
