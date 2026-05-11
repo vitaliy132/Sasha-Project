@@ -213,8 +213,16 @@ const buildLineItems = (b) => {
   return items;
 };
 
-const buildSummaryMessage = ({ total }) =>
-  `Your estimated total for this rental is ${formatCurrency(total)}. As indicated below, this includes the daily rental rate, preparation fee, kilometer packages where applicable, taxes, a full tank of propane, CDW Plus (Collision Damage Waiver), and a full demonstration of the vehicle. Please note: For Travel Trailer rentals, you must have a properly rated tow vehicle with hitch receiver, brake controller, and electrical adaptor installed. A $3000 security deposit is required on all rentals. An additional $1000 awning deposit applies if awning use is selected.`;
+const buildSummaryMessage = ({ total, vehicleType }) => {
+  const intro = `Your estimated total for this rental is ${formatCurrency(total)}. As indicated below, this includes the daily rental rate, preparation fee, kilometer packages where applicable, taxes, a full tank of propane, CDW Plus (Collision Damage Waiver), and a full demonstration of the vehicle.`;
+  const trailerNote =
+    vehicleType === "trailer"
+      ? " Please note: You must have a properly rated tow vehicle with hitch receiver, brake controller, and electrical adaptor installed."
+      : "";
+  const deposits =
+    " A $3000 security deposit is required on all rentals. An additional $1000 awning deposit applies if awning use is selected.";
+  return `${intro}${trailerNote}${deposits}`;
+};
 
 
 /**
@@ -324,7 +332,6 @@ const calculateRentalQuote = (payload) => {
     summaryMessage: buildSummaryMessage({
       total,
       vehicleType: sanitized.vehicleType,
-      calendarDays: days,
     }),
     breakdown,
     lineItems: buildLineItems(breakdown),
