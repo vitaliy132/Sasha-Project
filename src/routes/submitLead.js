@@ -4,8 +4,6 @@ const { asyncHandler } = require("../middleware/auth");
 const { HTTP_STATUS, MESSAGES } = require("../utils/constants");
 const logger = require("../utils/logger");
 const schema = require("../validators/calculatorLead.schema");
-const { successResponse, errorResponse, validationErrorResponse } = require("../utils/responseFormatter");
-const { isValidCurrencyFormat } = require("../utils/quoteValidator");
 
 const router = express.Router();
 
@@ -19,26 +17,29 @@ function splitFullName(name) {
 router.post("/", asyncHandler(async (req, res) => {
   const { error, value } = schema.validate(req.body || {});
   if (error) {
-    const { statusCode, data } = validationErrorResponse(error);
-    return res.status(statusCode).json(data);
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      error: MESSAGES.CALCULATOR_INVALID_PAYLOAD,
+      message: error.details?.[0]?.message || "Request body is invalid",
+    });
   }
 
-  // Validate quote format
+  // Validate quote format (should be a currency format like $X,XXX.XX)
   const quoteStr = value.quote?.trim() || "";
   if (!quoteStr) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json(
-      errorResponse("Quote is required", HTTP_STATUS.BAD_REQUEST).data
-    );
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      error: MESSAGES.CALCULATOR_INVALID_PAYLOAD,
+      message: "Quote is required",
+    });
   }
 
-  if (!isValidCurrencyFormat(quoteStr)) {
+  // Basic validation that quote looks like a currency (contains $ and digits)
+  const quoteCurrencyRegex = /^\$[\d,]+(\.\d{2})?$/;
+  if (!quoteCurrencyRegex.test(quoteStr)) {
     logger.warn("Invalid quote format received", { quote: quoteStr });
-    return res.status(HTTP_STATUS.BAD_REQUEST).json(
-      errorResponse(
-        "Quote must be in currency format (e.g., $1,234.56)",
-        HTTP_STATUS.BAD_REQUEST
-      ).data
-    );
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      error: MESSAGES.CALCULATOR_INVALID_PAYLOAD,
+      message: "Quote must be in currency format (e.g., $1,234.56)",
+    });
   }
 
   const { first_name, last_name } = splitFullName(value.name);
