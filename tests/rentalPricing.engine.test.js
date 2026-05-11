@@ -150,10 +150,10 @@ describe("Trailer vs Class A pricing", () => {
 });
 
 describe("CDW minimum vs per-day", () => {
-  it("3 days hits CDW minimum 210", () => {
+  it("5 calendar days: CDW uses $210 minimum when days × $30 is lower", () => {
     const q = calculateRentalQuote({
       startDate: "2026-01-01",
-      endDate: "2026-01-03",
+      endDate: "2026-01-05",
       vehicleType: "classA",
       vehicleModel: "25ft_slideout_2021_2023",
       kmPackages: 0,
@@ -187,7 +187,7 @@ describe("Cancellation waiver caps", () => {
   it("short rental hits $240 minimum", () => {
     const q = calculateRentalQuote({
       startDate: "2026-01-01",
-      endDate: "2026-01-03",
+      endDate: "2026-01-05",
       vehicleType: "classA",
       vehicleModel: "25ft_slideout_2021_2023",
       kmPackages: 0,
@@ -290,7 +290,7 @@ describe("Generator: hourly vs daily unlimited", () => {
   it("daily unlimited uses $60 × billed daily days (min 5)", () => {
     const q = calculateRentalQuote({
       startDate: "2026-01-01",
-      endDate: "2026-01-03",
+      endDate: "2026-01-05",
       vehicleType: "classA",
       vehicleModel: "25ft_slideout_2021_2023",
       kmPackages: 0,
@@ -337,6 +337,27 @@ describe("Prepaid mileage packages (PDF: $39 / 100 km, $350 / 1,000 km)", () => 
       generatorDailyUnlimited: false,
     });
     assert.strictEqual(q.breakdown.kmPackages, 3 * 39 + 350);
+  });
+});
+
+describe("Minimum rental length", () => {
+  it("throws when rental is shorter than 5 calendar days", () => {
+    assert.throws(
+      () =>
+        calculateRentalQuote({
+          startDate: "2026-01-01",
+          endDate: "2026-01-03",
+          vehicleType: "classA",
+          vehicleModel: "30ft_2024",
+          kmPackages: 0,
+          extraKm: 0,
+          generatorHours: 0,
+          cancellationWaiver: false,
+          windshieldCoverage: false,
+          generatorDailyUnlimited: false,
+        }),
+      /at least 5 calendar days/,
+    );
   });
 });
 

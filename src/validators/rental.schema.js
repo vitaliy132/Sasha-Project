@@ -1,5 +1,6 @@
 const Joi = require("joi");
-const { parseISO, isValid } = require("date-fns");
+const { differenceInCalendarDays, parseISO, isValid } = require("date-fns");
+const { MINIMUM_RENTAL_DAYS } = require("../utils/pricingConstants");
 
 const isIsoDate = (value, helpers) => {
   const parsed = parseISO(value);
@@ -34,6 +35,13 @@ module.exports = Joi.object({
 
     if (end <= start) {
       return helpers.error("any.invalid", { message: "endDate must be after startDate" });
+    }
+
+    const calendarDays = differenceInCalendarDays(end, start) + 1;
+    if (calendarDays < MINIMUM_RENTAL_DAYS) {
+      return helpers.error("any.invalid", {
+        message: `Rental must be at least ${MINIMUM_RENTAL_DAYS} calendar days (${calendarDays} given)`,
+      });
     }
 
     return value;

@@ -5,6 +5,7 @@ const { roundToTwo, getSeason, mmdd, inSeasonRange, formatCurrency } = require("
 const pricingConfig = require("../config/rentalPricing.json");
 const {
   TAX_RATE,
+  MINIMUM_RENTAL_DAYS,
   MIN_CHARGE_DAYS_FOR_DAILY_RATE,
   CDW_DAILY_RATE,
   CDW_MINIMUM,
@@ -246,6 +247,15 @@ const calculateRentalQuote = (payload) => {
     throw err;
   }
 
+  const calendarDaysCheck = calendarRentalDays(startDate, endDate);
+  if (calendarDaysCheck < MINIMUM_RENTAL_DAYS) {
+    const err = new Error(
+      `Rental must be at least ${MINIMUM_RENTAL_DAYS} calendar days (${calendarDaysCheck} given)`,
+    );
+    err.statusCode = 400;
+    throw err;
+  }
+
   if (!sanitized.vehicleModel) {
     const err = new Error("vehicleModel is required (no default configured for this vehicle type)");
     err.statusCode = 400;
@@ -369,16 +379,16 @@ function runRentalQuoteValidationTests(options = {}) {
     ...over,
   });
 
-  run("CASE 1: 3 calendar days, CDW on, Class A economy daily min 5 days", (lg) => {
+  run("CASE 1: 5 calendar days, CDW on, Class A economy daily rates", (lg) => {
     const q = calculateRentalQuote(
       base({
         startDate: "2026-01-01",
-        endDate: "2026-01-03",
+        endDate: "2026-01-05",
         vehicleType: "classA",
       }),
     );
     lg(JSON.stringify(q.breakdown, null, 2));
-    assert.strictEqual(q.breakdown.days, 3);
+    assert.strictEqual(q.breakdown.days, 5);
     assert.strictEqual(q.breakdown.cdw, 210);
     assert.strictEqual(q.breakdown.dailyRateTotal, 94 * 5);
   });
