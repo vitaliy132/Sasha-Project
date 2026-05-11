@@ -47,24 +47,6 @@ app.get("/api/env-check", (req, res) => {
   res.json(getEnvSummary());
 });
 
-app.get("/api/env-check", (req, res) => {
-  const required = Object.fromEntries(REQUIRED_ENV.map((key) => [key, hasEnv(key)]));
-  const optional = Object.fromEntries(OPTIONAL_ENV.map((key) => [key, hasEnv(key)]));
-  const allRequired = REQUIRED_ENV.every((key) => required[key]);
-  const sendgridConfigured = hasEnv("SENDGRID_API_KEY") && hasEnv("SENDGRID_FROM");
-  const smtpConfigured = hasEnv("SMTP_HOST") && hasEnv("SMTP_USER") && hasEnv("SMTP_PASS");
-  const emailProvider = sendgridConfigured ? "SendGrid" : smtpConfigured ? "SMTP" : "none";
-  res.json({
-    ok: allRequired,
-    required,
-    optional,
-    emailProvider,
-    sendgridConfigured,
-    smtpConfigured,
-    sheetsConfigured: OPTIONAL_ENV.slice(0, 4).every((key) => optional[key]),
-  });
-});
-
 app.get("/api/smtp-check", async (req, res) => {
   if (process.env.ENABLE_SMTP_DEBUG !== "1") {
     return res.status(HTTP_STATUS.NOT_FOUND).json({ error: "Not found" });

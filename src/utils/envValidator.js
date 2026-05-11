@@ -53,25 +53,47 @@ function validateRequiredEnv() {
 }
 
 /**
- * Get a summary of the environment configuration (for API responses)
- * Returns boolean values for required keys, status strings for optional
+ * Get a summary of the environment configuration (for API responses).
+ * `required` values are booleans; `optional` values are "configured" | "not set".
+ * `ok` reflects required vars plus SendGrid-from rule (aligned with startup validation).
  */
 function getEnvSummary() {
-  const summary = {
-    ok: true,
-    required: {},
-    optional: {},
+  const required = {};
+  REQUIRED_ENV.forEach((key) => {
+    required[key] = hasEnv(key);
+  });
+
+  const optional = {};
+  OPTIONAL_ENV.forEach((key) => {
+    optional[key] = hasEnv(key) ? "configured" : "not set";
+  });
+
+  let ok = REQUIRED_ENV.every((key) => required[key]);
+  if (process.env.SENDGRID_API_KEY && !hasEnv("SENDGRID_FROM")) {
+    ok = false;
+  }
+
+  const sendgridConfigured = hasEnv("SENDGRID_API_KEY") && hasEnv("SENDGRID_FROM");
+  const smtpConfigured =
+    hasEnv("SMTP_HOST") && hasEnv("SMTP_USER") && hasEnv("SMTP_PASS");
+  const emailProvider = sendgridConfigured
+    ? "SendGrid"
+    : smtpConfigured
+      ? "SMTP"
+      : "none";
+
+  const sheetsKeys = OPTIONAL_ENV.slice(0, 4);
+  const sheetsConfigured = sheetsKeys.every((key) => hasEnv(key));
+
+  return {
+    ok,
+    required,
+    optional,
+    emailProvider,
+    sendgridConfigured,
+    smtpConfigured,
+    sheetsConfigured,
   };
-
-  REQUIRED_ENV.forEach(key => {
-    summary.required[key] = hasEnv(key);
-  });
-
-  OPTIONAL_ENV.forEach(key => {
-    summary.optional[key] = hasEnv(key) ? "configured" : "not set";
-  });
-
-  return summary;
 }
 
 module.exports = {
