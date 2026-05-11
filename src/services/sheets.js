@@ -35,6 +35,19 @@ const createAuth = () => {
   });
 };
 
+const getLeadsSheet = async () => {
+  const auth = createAuth();
+  const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID, auth);
+  await doc.loadInfo();
+  return doc.sheetsByIndex[0];
+};
+
+const getRowsByEmail = async (email) => {
+  const sheet = await getLeadsSheet();
+  const rows = await sheet.getRows();
+  return { sheet, rows, row: rows.find((r) => r.get("email") === email) || null };
+};
+
 const formatLeadRow = (lead, isValid) => ({
   first_name: lead.first_name || "",
   last_name: lead.last_name || "",
@@ -50,14 +63,8 @@ exports.checkLeadExists = async (email) => {
   }
 
   try {
-    const auth = createAuth();
-    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID, auth);
-
-    await doc.loadInfo();
-    const sheet = doc.sheetsByIndex[0];
-    const rows = await sheet.getRows();
-
-    return rows.find((row) => row.get("email") === email) || null;
+    const { row } = await getRowsByEmail(email);
+    return row;
   } catch (err) {
     logger.error("Error checking for existing lead:", err.message || err);
     return null;
@@ -70,14 +77,7 @@ exports.markLeadAsSentToCRM = async (email) => {
   }
 
   try {
-    const auth = createAuth();
-    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID, auth);
-
-    await doc.loadInfo();
-    const sheet = doc.sheetsByIndex[0];
-    const rows = await sheet.getRows();
-
-    const row = rows.find((r) => r.get("email") === email);
+    const { row } = await getRowsByEmail(email);
     if (row) {
       row.assign({ sent_to_crm: "yes" });
       await row.save();
@@ -101,11 +101,7 @@ exports.appendLeadToSheet = async (lead, isValid) => {
       return false;
     }
 
-    const auth = createAuth();
-    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID, auth);
-
-    await doc.loadInfo();
-    const sheet = doc.sheetsByIndex[0];
+    const sheet = await getLeadsSheet();
 
     await sheet.addRow(formatLeadRow(lead, isValid));
     logger.info(
