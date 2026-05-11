@@ -116,13 +116,13 @@ describe("API", () => {
       assert.strictEqual(body.lineItems[0].name, "Daily Rental");
     });
 
-    it("returns 200 for a 5-calendar-day July rental (PREMIUM daily each day)", async () => {
+    it("charges minimum 5 days of daily rates when calendar rental is 3 days", async () => {
       const res = await fetch(baseUrl + "/calculate-rental", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           startDate: "2026-07-01",
-          endDate: "2026-07-05",
+          endDate: "2026-07-03",
           vehicleType: "classA",
           vehicleModel: "30ft_2024",
           kmPackages: 0,
@@ -133,7 +133,7 @@ describe("API", () => {
 
       assert.strictEqual(res.status, 200);
       const body = await res.json();
-      assert.strictEqual(body.breakdown.days, 5);
+      assert.strictEqual(body.breakdown.days, 3);
       assert.strictEqual(body.breakdown.dailyRateTotal, 289 * 5);
       assert.strictEqual(body.breakdown.cdw, 210);
       assert.strictEqual(body.breakdown.prepFee, 199);
@@ -153,27 +153,6 @@ describe("API", () => {
         }),
       });
       assert.strictEqual(res.status, 400);
-    });
-
-    it("returns 400 when rental is fewer than 5 calendar days", async () => {
-      const res = await fetch(baseUrl + "/calculate-rental", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          startDate: "2026-07-01",
-          endDate: "2026-07-03",
-          vehicleType: "classA",
-          vehicleModel: "30ft_2024",
-          kmPackages: 0,
-          extraKm: 0,
-          generatorHours: 0,
-        }),
-      });
-      assert.strictEqual(res.status, 400);
-      const body = await res.json();
-      assert.ok(
-        (body.message || "").includes("5 calendar days") || (body.message || "").includes("at least 5"),
-      );
     });
 
     it("includes trailer towing requirements message", async () => {
