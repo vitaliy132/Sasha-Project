@@ -71,43 +71,45 @@ exports.checkLeadExists = async (email) => {
   }
 };
 
-exports.markLeadAsSentToCRM = async (email) => {
+/**
+ * Marks the specific sheet row that was just appended (same email may appear on multiple rows).
+ * @param {object | null | undefined} sheetRow google-spreadsheet row instance
+ */
+exports.markLeadAsSentToCRM = async (sheetRow) => {
   if (!checkSheetEnv()) {
+    return;
+  }
+  if (!sheetRow || typeof sheetRow.assign !== "function" || typeof sheetRow.save !== "function") {
     return;
   }
 
   try {
-    const { row } = await getRowsByEmail(email);
-    if (row) {
-      row.assign({ sent_to_crm: "yes" });
-      await row.save();
-      logger.info(`Lead marked as sent to CRM: ${email}`);
-    }
+    sheetRow.assign({ sent_to_crm: "yes" });
+    await sheetRow.save();
+    const email = sheetRow.get?.("email") || "";
+    logger.info(`Lead row marked as sent to CRM: ${email}`);
   } catch (err) {
     logger.error("Error marking lead as sent to CRM:", err.message || err);
   }
 };
 
+/**
+ * Appends a new lead row (allows the same email to submit multiple times).
+ * @returns {Promise<object | null>} New row, or null if Sheets is not configured.
+ */
 exports.appendLeadToSheet = async (lead, isValid) => {
   if (!checkSheetEnv()) {
     logger.warn("Google Sheets env vars not configured, skipping sheet append");
-    return true;
+    return null;
   }
 
   try {
-    const existingLead = await exports.checkLeadExists(lead.email);
-    if (existingLead) {
-      logger.warn(`Duplicate lead detected, skipping append: ${lead.email}`);
-      return false;
-    }
-
     const sheet = await getLeadsSheet();
-
-    await sheet.addRow(formatLeadRow(lead, isValid));
+    const row = await sheet.addRow(formatLeadRow(lead, isValid));
     logger.info(
       `Lead appended to sheet (validated: ${isValid ? "yes" : "no"}): ${lead.first_name} ${lead.last_name}`,
     );
-    return true;
+    return row || null;
   } catch (err) {
     logger.error("Google Sheets append error:", err.message || err);
     throw err;

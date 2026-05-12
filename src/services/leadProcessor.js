@@ -1,42 +1,18 @@
 const schema = require("../validators/lead.schema");
 const { sendLeadEmail } = require("./mailer");
 const { formatLeadEmail } = require("./formatter");
-const { appendLeadToSheet, checkLeadExists, markLeadAsSentToCRM } = require("./sheets");
+const { appendLeadToSheet, markLeadAsSentToCRM } = require("./sheets");
 const { HTTP_STATUS, MESSAGES } = require("../utils/constants");
 const logger = require("../utils/logger");
 
 const processLead = async (normalized) => {
-  const existingLead = await checkLeadExists(normalized.email);
-  if (existingLead) {
-    const wasAlreadySent = existingLead.get("sent_to_crm") === "yes";
-    return {
-      success: false,
-      statusCode: HTTP_STATUS.CONFLICT,
-      data: {
-        message: wasAlreadySent
-          ? "Lead already sent to CRM (duplicate)"
-          : "Lead already exists in system (may have failed validation)",
-        validated: existingLead.get("validated"),
-        duplicate: true,
-      },
-    };
-  }
-
   const { error, value } = schema.validate(normalized);
   const isValid = !error;
 
+  /** Row created for this submission (used to set sent_to_crm without touching older rows for the same email). */
+  let sheetRow = null;
   try {
-    const appended = await appendLeadToSheet(normalized, isValid);
-    if (!appended) {
-      return {
-        success: false,
-        statusCode: HTTP_STATUS.CONFLICT,
-        data: {
-          message: "Lead already exists in sheet (duplicate)",
-          duplicate: true,
-        },
-      };
-    }
+    sheetRow = await appendLeadToSheet(normalized, isValid);
   } catch (sheetErr) {
     logger.error("Failed to append to Google Sheets:", sheetErr.message || sheetErr);
   }
@@ -55,7 +31,7 @@ const processLead = async (normalized) => {
   try {
     const emailBody = formatLeadEmail(value);
     await sendLeadEmail(emailBody, value);
-    await markLeadAsSentToCRM(normalized.email);
+    await markLeadAsSentToCRM(sheetRow);
   } catch (emailErr) {
     logger.error("Failed to send lead email:", emailErr.message || emailErr);
     return {
