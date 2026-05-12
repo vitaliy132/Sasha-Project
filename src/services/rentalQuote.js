@@ -166,13 +166,22 @@ const toNonNegativeInteger = (value, defaultValue = 0) => {
   return n;
 };
 
+/** Legacy Class A keys merged into `35_36ft_slideout_bunks_2025` in pricing config. */
+const DEPRECATED_CLASS_A_VEHICLE_MODELS = {
+  "35ft_2025": "35_36ft_slideout_bunks_2025",
+  "36ft_2025": "35_36ft_slideout_bunks_2025",
+};
+
 const sanitizePayload = (raw) => {
   const vt = raw?.vehicleType;
   const vehicleType = VALID_VEHICLE_TYPES.includes(vt) ? vt : "classA";
 
   const defaultModel = defaults?.vehicleModelByType?.[vehicleType] || "";
   const rawModel = typeof raw?.vehicleModel === "string" ? raw.vehicleModel.trim() : "";
-  const vehicleModel = rawModel || defaultModel;
+  let vehicleModel = rawModel || defaultModel;
+  if (vehicleType === "classA" && DEPRECATED_CLASS_A_VEHICLE_MODELS[vehicleModel]) {
+    vehicleModel = DEPRECATED_CLASS_A_VEHICLE_MODELS[vehicleModel];
+  }
 
   return {
     startDate: raw?.startDate,

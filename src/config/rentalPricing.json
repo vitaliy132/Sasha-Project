@@ -19,8 +19,7 @@
       "30ft_2024": { "PREMIUM": 289, "PRIME": 234, "SHOULDER": 154, "ECONOMY": 119 },
       "32ft_2017": { "PREMIUM": 289, "PRIME": 234, "SHOULDER": 154, "ECONOMY": 119 },
       "34ft_2023": { "PREMIUM": 314, "PRIME": 259, "SHOULDER": 179, "ECONOMY": 144 },
-      "35ft_2025": { "PREMIUM": 314, "PRIME": 259, "SHOULDER": 179, "ECONOMY": 144 },
-      "36ft_2025": { "PREMIUM": 314, "PRIME": 259, "SHOULDER": 179, "ECONOMY": 144 }
+      "35_36ft_slideout_bunks_2025": { "PREMIUM": 314, "PRIME": 259, "SHOULDER": 179, "ECONOMY": 144 }
     },
     "classC": {
       "31ft_slideout_bunks_2019": { "PREMIUM": 264, "PRIME": 209, "SHOULDER": 129, "ECONOMY": 99 },
