@@ -3,12 +3,11 @@
     "PREMIUM": { "start": "07-01", "end": "08-31" },
     "PRIME": [
       { "start": "06-11", "end": "06-30" },
-      { "start": "09-01", "end": "09-30" },
-      { "start": "10-01", "end": "10-25" }
+      { "start": "09-01", "end": "09-30" }
     ],
     "SHOULDER": [
       { "start": "05-15", "end": "06-10" },
-      { "start": "10-26", "end": "05-14" }
+      { "start": "10-01", "end": "10-25" }
     ],
     "ECONOMY": [
       { "start": "10-26", "end": "12-31" },
@@ -21,11 +20,11 @@
       "32ft_2017": { "PREMIUM": 289, "PRIME": 234, "SHOULDER": 154, "ECONOMY": 119 },
       "34ft_2023": { "PREMIUM": 314, "PRIME": 259, "SHOULDER": 179, "ECONOMY": 144 },
       "35ft_2025": { "PREMIUM": 314, "PRIME": 259, "SHOULDER": 179, "ECONOMY": 144 },
-      "36ft_2025": { "PREMIUM": 314, "PRIME": 259, "SHOULDER": 179, "ECONOMY": 144 },
-      "31ft_slideout_bunks_2019": { "PREMIUM": 264, "PRIME": 209, "SHOULDER": 129, "ECONOMY": 99 }
+      "36ft_2025": { "PREMIUM": 314, "PRIME": 259, "SHOULDER": 179, "ECONOMY": 144 }
     },
     "classC": {
-      "25ft_slideout_2021_2023": { "PREMIUM": 189, "PRIME": 119, "SHOULDER": 94, "ECONOMY": 94 },
+      "31ft_slideout_bunks_2019": { "PREMIUM": 264, "PRIME": 209, "SHOULDER": 129, "ECONOMY": 99 },
+      "25ft_slideout_2021_2023": { "PREMIUM": 244, "PRIME": 189, "SHOULDER": 119, "ECONOMY": 94 },
       "25ft_slideout_2018_economy": { "PREMIUM": 214, "PRIME": 159, "SHOULDER": 99, "ECONOMY": 94 },
       "23ft_2020_2026": { "PREMIUM": 224, "PRIME": 174, "SHOULDER": 109, "ECONOMY": 84 }
     },

@@ -22,14 +22,15 @@ describe("getSeason()", () => {
     assert.strictEqual(getSeason(parseISO("2026-09-15")), "PRIME");
   });
 
-  it("detects SHOULDER in late May and in winter (Oct 26–May 14 wrap)", () => {
+  it("detects SHOULDER in late May and early October", () => {
     assert.strictEqual(getSeason(parseISO("2026-05-20")), "SHOULDER");
-    assert.strictEqual(getSeason(parseISO("2026-01-10")), "SHOULDER");
-    assert.strictEqual(getSeason(parseISO("2026-11-01")), "SHOULDER");
+    assert.strictEqual(getSeason(parseISO("2026-10-10")), "SHOULDER");
   });
 
-  it("detects PRIME for Oct 1–25", () => {
-    assert.strictEqual(getSeason(parseISO("2026-10-10")), "PRIME");
+  it("detects ECONOMY in winter (Oct 26–May 14 wrap)", () => {
+    assert.strictEqual(getSeason(parseISO("2026-01-10")), "ECONOMY");
+    assert.strictEqual(getSeason(parseISO("2026-11-01")), "ECONOMY");
+    assert.strictEqual(getSeason(parseISO("2026-05-10")), "ECONOMY");
   });
 });
 
@@ -54,7 +55,7 @@ describe("Cross-season daily total", () => {
     assert.strictEqual(getSeason(parseISO("2026-06-30")), "PRIME");
     assert.strictEqual(getSeason(parseISO("2026-07-01")), "PREMIUM");
     assert.strictEqual(getSeason(parseISO("2026-07-02")), "PREMIUM");
-    const expected = 119 * 3 + 189 * 2;
+    const expected = 189 * 3 + 244 * 2;
     assert.strictEqual(q.breakdown.dailyRateTotal, expected);
   });
 });
@@ -74,7 +75,7 @@ describe("Trailer vs Class A pricing", () => {
       generatorDailyUnlimited: false,
     });
     assert.strictEqual(q.breakdown.hitch, 150);
-    assert.strictEqual(q.breakdown.dailyRateTotal, 99 * 5);
+    assert.strictEqual(q.breakdown.dailyRateTotal, 94 * 5);
   });
 
   it("does not charge trailer hitch when customer has own hitch", () => {
@@ -144,7 +145,7 @@ describe("Trailer vs Class A pricing", () => {
       generatorDailyUnlimited: false,
     });
     assert.strictEqual(q.breakdown.prepFee, 199);
-    assert.strictEqual(q.breakdown.dailyRateTotal, 154 * 5);
+    assert.strictEqual(q.breakdown.dailyRateTotal, 119 * 5);
   });
 });
 

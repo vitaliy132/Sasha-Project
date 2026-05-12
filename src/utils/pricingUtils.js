@@ -42,21 +42,21 @@ function getSeason(date) {
     return "PREMIUM";
   }
 
-  // PRIME: Jun 11–Jun 30, Sep 1–Sep 30, Oct 1–Oct 25 (see rentalPricing.json)
+  // PRIME: Jun 11–Jun 30, Sep 1–Sep 30
   for (const range of SEASONS.PRIME) {
     if (inSeasonRange(d, range.start, range.end)) {
       return "PRIME";
     }
   }
 
-  // SHOULDER: May 15–Jun 10 and Oct 26–May 14 (wrap)
+  // SHOULDER: May 15–Jun 10, Oct 1–Oct 25
   for (const range of SEASONS.SHOULDER) {
     if (inSeasonRange(d, range.start, range.end)) {
       return "SHOULDER";
     }
   }
 
-  // Fallback if calendar rules change and a day is not covered above
+  // ECONOMY: Oct 26–May 14 (wrap); see rentalPricing.json SEASONS.ECONOMY
   return "ECONOMY";
 }
 
