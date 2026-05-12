@@ -38,6 +38,15 @@ function formatVehicleModelDisplay(v) {
   return "";
 }
 
+function num(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function yn(value) {
+  return value === true ? "Yes" : "No";
+}
+
 /**
  * Human-readable snapshot for the CRM email (matches calculator copy / lead style).
  */
