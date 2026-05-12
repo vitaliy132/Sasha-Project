@@ -3,7 +3,8 @@ const sgMail = require("@sendgrid/mail");
 
 const useSendGrid = !!process.env.SENDGRID_API_KEY;
 const FROM_ADDRESS = process.env.SENDGRID_FROM || process.env.SMTP_USER || process.env.CRM_EMAIL;
-const FROM_NAME = "ManyChat Leads";
+/** Display name shown in the inbox (SendGrid + SMTP). */
+const FROM_NAME = (process.env.SENDGRID_FROM_NAME || "ManyChat Leads").trim() || "ManyChat Leads";
 
 if (!FROM_ADDRESS) {
   throw new Error(

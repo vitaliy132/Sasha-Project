@@ -17,6 +17,7 @@ const OPTIONAL_ENV = [
   "GOOGLE_PRIVATE_KEY",
   "SENDGRID_API_KEY",
   "SENDGRID_FROM",
+  "SENDGRID_FROM_NAME",
 ];
 const hasEnv = (key) => !!process.env[key]?.trim();
 
@@ -114,9 +115,11 @@ app.get("/api/sendgrid-check", async (req, res) => {
   try {
     const sgMail = require("@sendgrid/mail");
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    const fromEmail = process.env.SENDGRID_FROM.trim();
+    const fromName = (process.env.SENDGRID_FROM_NAME || "ManyChat Leads").trim() || "ManyChat Leads";
     await sgMail.send({
       to: process.env.CRM_EMAIL,
-      from: process.env.SENDGRID_FROM,
+      from: { email: fromEmail, name: fromName },
       subject: "SendGrid Configuration Test",
       text: "If you see this, SendGrid is configured correctly.",
       html: "<p>If you see this, SendGrid is configured correctly.</p>",
@@ -124,7 +127,8 @@ app.get("/api/sendgrid-check", async (req, res) => {
     return res.json({
       ok: true,
       message: "SendGrid test email sent successfully",
-      from: process.env.SENDGRID_FROM,
+      from: fromEmail,
+      fromName,
       to: process.env.CRM_EMAIL,
     });
   } catch (err) {
