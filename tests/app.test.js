@@ -359,6 +359,31 @@ describe("Formatter", () => {
     assert.ok(body.html.includes("First Name</td>"));
   });
 
+  it("includes rental calculator selections block for calculator leads", () => {
+    const summary = [
+      "Start date: 2026-06-01",
+      "End date: 2026-06-10",
+      "Vehicle type: Class A",
+      "Vehicle model: Class A 30 (2024-2026)",
+      "Generator option selected: None ($0)",
+    ].join("\n");
+    const lead = {
+      first_name: "Jane",
+      last_name: "Doe",
+      email: "jane@example.com",
+      phone: "1234567890",
+      platform: "rental-calculator",
+      quoted_total: "$1,000.00",
+      calculator_request_summary: summary,
+    };
+    const body = formatLeadEmail(lead);
+    assert.ok(body.text.includes("Rental calculator selections:"));
+    assert.ok(body.text.includes("Start date: 2026-06-01"));
+    assert.ok(body.text.includes("Vehicle type: Class A"));
+    assert.ok(body.text.includes("Generator option selected: None ($0)"));
+    assert.ok(!body.text.includes("Rental start:"));
+  });
+
   it("omits empty optional fields", () => {
     const lead = {
       first_name: "Jane",

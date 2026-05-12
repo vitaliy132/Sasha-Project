@@ -43,7 +43,7 @@ app.get("/", (req, res) => {
     activeEndpoints: {
       rentalQuote: "POST /calculate-rental (used by FrontEndSasha)",
       calculatorLead:
-        "POST /submit-lead — name, email, phone, address, quote; optional vehicleType, vehicleModel, vehicleModelLabel, startDate, endDate, add-ons (same flags as /calculate-rental), additionalNotes, rentalDetails, quoteBreakdown (all included in CRM email)",
+        "POST /submit-lead — name, email, phone, address, quote; optional calculator fields (vehicleType, vehicleModel, vehicleModelLabel, startDate, endDate, add-ons as /calculate-rental, personalKitPeople or beddingKitPeople, additionalNotes, rentalDetails, quoteBreakdown). CRM email includes a full “Rental calculator selections” lead block with dates, vehicle, waiver/coverage/kits, km packages, extra-km copy, and generator option.",
       manychatWebhook: "POST /api/leads/manychat",
     },
     debugEndpoints: {

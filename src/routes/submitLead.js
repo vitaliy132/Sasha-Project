@@ -7,10 +7,14 @@ const schema = require("../validators/calculatorLead.schema");
 
 const router = express.Router();
 
-const VEHICLE_TYPE_LABELS = {
-  classA: "Class A motorhome",
-  classB: "Class B camper van",
-  classC: "Class C motorhome",
+const EXTRA_KM_LINE =
+  "Additional kms are $0.41 per km, charged at drop off.";
+
+/** Short labels to match the rental calculator UI. */
+const VEHICLE_TYPE_SHORT = {
+  classA: "Class A",
+  classB: "Class B",
+  classC: "Class C",
   trailer: "Travel trailer",
 };
 
@@ -21,41 +25,64 @@ function splitFullName(name) {
   return { first_name, last_name };
 }
 
-function labelVehicleType(vt) {
+function shortVehicleTypeLabel(vt) {
   if (!vt) return "";
-  return VEHICLE_TYPE_LABELS[vt] || vt;
+  return VEHICLE_TYPE_SHORT[vt] || vt;
 }
 
-function formatVehicleModelRow(label, key) {
-  const l = (label || "").trim();
-  const k = (key || "").trim();
-  if (l && k && l !== k) return `${l} (${k})`;
-  return l || k || "";
+function formatVehicleModelDisplay(v) {
+  const label = (v.vehicleModelLabel || "").trim();
+  const key = (v.vehicleModel || "").trim();
+  if (label) return label;
+  if (key) return key;
+  return "";
 }
 
-function buildRentalExtrasSummary(v) {
-  const lines = [];
-  if (v.cancellationWaiver === true) lines.push("Cancellation waiver");
-  if (v.windshieldCoverage === true) lines.push("Windshield coverage");
-  if (v.generatorDailyUnlimited === true) lines.push("Generator: unlimited daily");
-  if (typeof v.kmPackages === "number" && v.kmPackages > 0) {
-    lines.push(`Prepaid 1,000 km packages: ${v.kmPackages}`);
+/**
+ * Human-readable snapshot for the CRM email (matches calculator copy / lead style).
+ */
+function buildCalculatorRequestSummary(v) {
+  const start = (v.startDate || "").trim() || "Not provided";
+  const end = (v.endDate || "").trim() || "Not provided";
+  const vt = (v.vehicleType || "").trim();
+  const vehicleTypeLine = vt ? shortVehicleTypeLabel(vt) : "Not provided";
+  const vehicleModelLine = formatVehicleModelDisplay(v) || "Not provided";
+
+  const personalKit = num(v.personalKitPeople ?? v.beddingKitPeople, 0);
+  const km1000 = num(v.kmPackages, 0);
+  const km100 = num(v.kmPackages100, 0);
+  const extraKm = num(v.extraKm, 0);
+
+  let generatorLine = "None ($0)";
+  if (v.generatorDailyUnlimited === true) {
+    generatorLine = "Daily unlimited ($60/day)";
+  } else if (num(v.generatorHours, 0) > 0) {
+    generatorLine = `Prepaid generator hours: ${num(v.generatorHours, 0)} ($5/hour)`;
   }
-  if (typeof v.kmPackages100 === "number" && v.kmPackages100 > 0) {
-    lines.push(`Prepaid 100 km packages: ${v.kmPackages100}`);
+
+  const lines = [
+    `Start date: ${start}`,
+    `End date: ${end}`,
+    `Vehicle type: ${vehicleTypeLine}`,
+    `Vehicle model: ${vehicleModelLine}`,
+    `Cancellation waiver ($20/day, min $240): ${yn(v.cancellationWaiver)}`,
+    `Windshield coverage: ${yn(v.windshieldCoverage)}`,
+    `Kitchen Kit ($85/trip): ${yn(v.kitchenKit)}`,
+    `Personal Kit ($35/person): ${personalKit}`,
+    `Quantity of 1,000 km packages ($350 each): ${km1000}`,
+    `Quantity of 100 km packages ($39 each): ${km100}`,
+    `${EXTRA_KM_LINE}`,
+    `Estimated additional km (customer entered): ${extraKm}`,
+    `Generator option selected: ${generatorLine}`,
+  ];
+
+  if (v.bikeRack === true) {
+    lines.push("Bike rack: Yes");
   }
-  if (typeof v.generatorHours === "number" && v.generatorHours > 0) {
-    lines.push(`Prepaid generator hours: ${v.generatorHours}`);
+  if (v.hasOwnHitch === true) {
+    lines.push("Customer has own hitch (trailer rental): Yes");
   }
-  if (typeof v.extraKm === "number" && v.extraKm > 0) {
-    lines.push(`Extra km (entered): ${v.extraKm}`);
-  }
-  if (v.kitchenKit === true) lines.push("Kitchen kit");
-  if (typeof v.beddingKitPeople === "number" && v.beddingKitPeople > 0) {
-    lines.push(`Bedding kit (people): ${v.beddingKitPeople}`);
-  }
-  if (v.bikeRack === true) lines.push("Bike rack");
-  if (v.hasOwnHitch === true) lines.push("Customer has own hitch (trailer)");
+
   return lines.join("\n");
 }
 
@@ -89,8 +116,7 @@ router.post("/", asyncHandler(async (req, res) => {
   const idLine = value.userId?.trim() ? `User / ManyChat ID: ${value.userId.trim()}` : null;
 
   const vt = (value.vehicleType || "").trim();
-  const vm = formatVehicleModelRow(value.vehicleModelLabel, value.vehicleModel);
-  const extras = buildRentalExtrasSummary(value);
+  const calculatorRequestSummary = buildCalculatorRequestSummary(value);
   const customerNotes = (value.additionalNotes || "").trim();
 
   const notesParts = [
@@ -117,17 +143,11 @@ router.post("/", asyncHandler(async (req, res) => {
     phone: value.phone.trim(),
     address: value.address?.trim(),
     quoted_total: quoteStr,
+    calculator_request_summary: calculatorRequestSummary,
     notes,
     platform: "rental-calculator",
   };
 
-  if (vt) normalized.vehicle_type = labelVehicleType(vt);
-  if (vm) normalized.vehicle_model = vm;
-  const start = (value.startDate || "").trim();
-  const end = (value.endDate || "").trim();
-  if (start) normalized.rental_start = start;
-  if (end) normalized.rental_end = end;
-  if (extras) normalized.rental_extras = extras;
   if (customerNotes) normalized.customer_notes = customerNotes;
 
   const result = await processLead(normalized);

@@ -19,6 +19,21 @@ const leadSourceTitle = (platform) => {
 };
 
 exports.formatLeadEmail = (lead) => {
+  const hasCalculatorSummary =
+    lead.platform === "rental-calculator" &&
+    lead.calculator_request_summary != null &&
+    String(lead.calculator_request_summary).trim() !== "";
+
+  const calculatorFields = hasCalculatorSummary
+    ? [{ label: "Rental calculator selections", value: lead.calculator_request_summary }]
+    : [
+        { label: "Vehicle type", value: lead.vehicle_type },
+        { label: "Vehicle / unit", value: lead.vehicle_model },
+        { label: "Start date", value: lead.rental_start },
+        { label: "End date", value: lead.rental_end },
+        { label: "Add-ons & options", value: lead.rental_extras },
+      ];
+
   const fields = [
     { label: "First Name", value: lead.first_name },
     { label: "Last Name", value: lead.last_name },
@@ -26,11 +41,7 @@ exports.formatLeadEmail = (lead) => {
     { label: "Phone", value: lead.phone },
     { label: "Quoted total (calculator)", value: lead.quoted_total },
     { label: "Address", value: lead.address },
-    { label: "Vehicle type", value: lead.vehicle_type },
-    { label: "Vehicle / unit", value: lead.vehicle_model },
-    { label: "Rental start", value: lead.rental_start },
-    { label: "Rental end", value: lead.rental_end },
-    { label: "Add-ons & options", value: lead.rental_extras },
+    ...calculatorFields,
     { label: "Customer notes", value: lead.customer_notes },
     { label: "Interest", value: lead.interest },
     { label: "Notes", value: lead.notes },

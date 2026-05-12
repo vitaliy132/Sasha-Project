@@ -20,4 +20,6 @@ module.exports = Joi.object({
   customer_notes: Joi.string().allow("").optional(),
   /** Rental calculator submitted total (e.g. $1,234.56). */
   quoted_total: Joi.string().allow("").optional(),
+  /** Full calculator snapshot (dates, vehicle, add-ons, generator) for CRM email. */
+  calculator_request_summary: Joi.string().allow("").optional(),
 });

@@ -17,6 +17,8 @@ const calculatorExtras = {
   extraKm: Joi.number().min(0).optional(),
   kitchenKit: Joi.boolean().optional(),
   beddingKitPeople: Joi.number().integer().min(0).optional(),
+  /** Alias for beddingKitPeople (Personal Kit count in the UI). */
+  personalKitPeople: Joi.number().integer().min(0).optional(),
   bikeRack: Joi.boolean().optional(),
   hasOwnHitch: Joi.boolean().optional(),
   additionalNotes: Joi.string().trim().allow("").optional().default(""),
