@@ -358,6 +358,7 @@ function runRentalQuoteValidationTests(options = {}) {
   };
 
   const base = (over) => ({
+    vehicleType: "classC",
     vehicleModel: "25ft_slideout_2021_2023",
     kmPackages: 0,
     kmPackages100: 0,
@@ -369,12 +370,11 @@ function runRentalQuoteValidationTests(options = {}) {
     ...over,
   });
 
-  run("CASE 1: 3 calendar days, CDW on, Class A economy daily min 5 days", (lg) => {
+  run("CASE 1: 3 calendar days, CDW on, Class C shoulder daily min 5 days", (lg) => {
     const q = calculateRentalQuote(
       base({
         startDate: "2026-01-01",
         endDate: "2026-01-03",
-        vehicleType: "classA",
       }),
     );
     lg(JSON.stringify(q.breakdown, null, 2));
@@ -383,18 +383,19 @@ function runRentalQuoteValidationTests(options = {}) {
     assert.strictEqual(q.breakdown.dailyRateTotal, 94 * 5);
   });
 
-  run("CASE 2: 7 days in July (PREMIUM season), CDW = max(7×30,210)", (lg) => {
+  run("CASE 2: 7 days in July (PREMIUM season), Class A 30ft", (lg) => {
     const q = calculateRentalQuote(
       base({
         startDate: "2026-07-01",
         endDate: "2026-07-07",
         vehicleType: "classA",
+        vehicleModel: "30ft_2024",
       }),
     );
     lg(JSON.stringify(q.breakdown, null, 2));
     assert.strictEqual(q.breakdown.days, 7);
     assert.strictEqual(q.breakdown.cdw, 210);
-    assert.strictEqual(q.breakdown.dailyRateTotal, 244 * 7);
+    assert.strictEqual(q.breakdown.dailyRateTotal, 289 * 7);
   });
 
   run("CASE 3: Trailer + hitch 150", (lg) => {
@@ -436,7 +437,6 @@ function runRentalQuoteValidationTests(options = {}) {
       base({
         startDate: "2026-01-01",
         endDate: "2026-01-05",
-        vehicleType: "classA",
         extraKm: 10000,
         generatorHours: 100,
       }),
@@ -451,7 +451,6 @@ function runRentalQuoteValidationTests(options = {}) {
       base({
         startDate: "2026-02-01",
         endDate: "2026-02-07",
-        vehicleType: "classA",
         kmPackages: null,
         kmPackages100: null,
         extraKm: "",

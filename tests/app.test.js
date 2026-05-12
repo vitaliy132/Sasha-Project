@@ -84,7 +84,7 @@ describe("API", () => {
         body: JSON.stringify({
           startDate: "2026-01-01",
           endDate: "2026-01-05",
-          vehicleType: "classA",
+          vehicleType: "classC",
           vehicleModel: "25ft_slideout_2021_2023",
           kmPackages: 1,
           generatorHours: 2,
@@ -94,24 +94,24 @@ describe("API", () => {
 
       assert.strictEqual(res.status, 200);
       const body = await res.json();
-      assert.strictEqual(body.total, 1630.65);
-      assert.strictEqual(body.totalFormatted, "$1630.65");
-      assert.ok(body.summaryMessage.includes("Your estimated total for this rental is $1630.65."));
+      assert.strictEqual(body.total, 1517.65);
+      assert.strictEqual(body.totalFormatted, "$1517.65");
+      assert.ok(body.summaryMessage.includes("Your estimated total for this rental is $1517.65."));
       assert.ok(body.summaryMessage.includes("CDW Plus"));
       assert.ok(body.summaryMessage.includes("A $3000 security deposit is required on all rentals."));
       assert.ok(body.summaryMessage.includes("An additional $1000 awning deposit applies if awning use is selected."));
       assert.strictEqual(body.breakdown.days, 5);
       assert.strictEqual(body.breakdown.dailyRateTotal, 470);
       assert.strictEqual(body.breakdown.cdw, 210);
-      assert.strictEqual(body.breakdown.prepFee, 199);
+      assert.strictEqual(body.breakdown.prepFee, 149);
       assert.strictEqual(body.breakdown.kmPackages, 350);
       assert.strictEqual(body.breakdown.hitch, 0);
-      assert.strictEqual(body.breakdown.winterization, 199.95);
+      assert.strictEqual(body.breakdown.winterization, 149.95);
       assert.strictEqual(body.breakdown.extraKm, 4.1);
       assert.strictEqual(body.breakdown.generator, 10);
       assert.strictEqual(body.breakdown.cancellationWaiver, 0);
       assert.strictEqual(body.breakdown.windshield, 0);
-      assert.strictEqual(body.breakdown.tax, 187.6);
+      assert.strictEqual(body.breakdown.tax, 174.6);
       assert.strictEqual(body.lineItems.length, 13);
       assert.strictEqual(body.lineItems[0].name, "Daily Rental");
     });
@@ -141,7 +141,7 @@ describe("API", () => {
       assert.ok(body.summaryMessage.includes("A $3000 security deposit is required on all rentals."));
     });
 
-    it("returns 400 when vehicleModel is missing", async () => {
+    it("returns 400 when vehicleModel is unknown", async () => {
       const res = await fetch(baseUrl + "/calculate-rental", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -149,6 +149,7 @@ describe("API", () => {
           startDate: "2026-01-01",
           endDate: "2026-01-05",
           vehicleType: "classC",
+          vehicleModel: "__unknown_model__",
           kmPackages: 0,
         }),
       });

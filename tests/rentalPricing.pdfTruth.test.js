@@ -8,7 +8,7 @@ const { parseISO } = require("date-fns");
 
 const { getSeason, calculateRentalQuote, PRICING } = require("../src/services/rentalQuote.js");
 
-/** Single source of truth: PDF excerpt for Class A, Class B, Travel Trailer */
+/** Operator matrix: Class A, Class C, Class B, Travel Trailer (internal keys). */
 const PDF_DAILY_RATES = {
   classA: {
     "30ft_2024": { PREMIUM: 289, PRIME: 234, SHOULDER: 154, ECONOMY: 119 },
@@ -17,7 +17,9 @@ const PDF_DAILY_RATES = {
     "35ft_2025": { PREMIUM: 314, PRIME: 259, SHOULDER: 179, ECONOMY: 144 },
     "36ft_2025": { PREMIUM: 314, PRIME: 259, SHOULDER: 179, ECONOMY: 144 },
     "31ft_slideout_bunks_2019": { PREMIUM: 264, PRIME: 209, SHOULDER: 129, ECONOMY: 99 },
-    "25ft_slideout_2021_2023": { PREMIUM: 244, PRIME: 189, SHOULDER: 119, ECONOMY: 94 },
+  },
+  classC: {
+    "25ft_slideout_2021_2023": { PREMIUM: 189, PRIME: 119, SHOULDER: 94, ECONOMY: 94 },
     "25ft_slideout_2018_economy": { PREMIUM: 214, PRIME: 159, SHOULDER: 99, ECONOMY: 94 },
     "23ft_2020_2026": { PREMIUM: 224, PRIME: 174, SHOULDER: 109, ECONOMY: 84 },
   },
@@ -51,7 +53,7 @@ describe("PDF daily rate tables (config vs PDF)", () => {
 describe("Season boundaries (MM-DD, inclusive ranges)", () => {
   const y = "2026";
   const cases = [
-    ["05-14", "ECONOMY", "May 14 → ECONOMY"],
+    ["05-14", "SHOULDER", "May 14 → SHOULDER (Oct 26–May 14 wrap)"],
     ["05-15", "SHOULDER", "May 15 → SHOULDER"],
     ["06-10", "SHOULDER", "Jun 10 → SHOULDER"],
     ["06-11", "PRIME", "Jun 11 → PRIME"],
@@ -60,9 +62,9 @@ describe("Season boundaries (MM-DD, inclusive ranges)", () => {
     ["08-31", "PREMIUM", "Aug 31 → PREMIUM"],
     ["09-01", "PRIME", "Sep 1 → PRIME"],
     ["09-30", "PRIME", "Sep 30 → PRIME"],
-    ["10-01", "SHOULDER", "Oct 1 → SHOULDER"],
-    ["10-25", "SHOULDER", "Oct 25 → SHOULDER"],
-    ["10-26", "ECONOMY", "Oct 26 → ECONOMY"],
+    ["10-01", "PRIME", "Oct 1 → PRIME"],
+    ["10-25", "PRIME", "Oct 25 → PRIME"],
+    ["10-26", "SHOULDER", "Oct 26 → SHOULDER"],
   ];
 
   for (const [mmdd, expected, label] of cases) {
@@ -77,7 +79,7 @@ describe("Multi-day totals & season spans", () => {
     const q = calculateRentalQuote({
       startDate: "2026-06-28",
       endDate: "2026-07-02",
-      vehicleType: "classA",
+      vehicleType: "classC",
       vehicleModel: "25ft_slideout_2021_2023",
       kmPackages: 0,
       extraKm: 0,
@@ -86,15 +88,15 @@ describe("Multi-day totals & season spans", () => {
       windshieldCoverage: false,
       generatorDailyUnlimited: false,
     });
-    const expected = 189 * 3 + 244 * 2;
+    const expected = 119 * 3 + 189 * 2;
     assert.strictEqual(q.breakdown.dailyRateTotal, expected);
   });
 
-  it("Class A 23ft (2020–2026) differs from Class B 23ft in PREMIUM", () => {
-    const a = calculateRentalQuote({
+  it("Class C 23ft differs from Class B 23ft in PREMIUM", () => {
+    const c = calculateRentalQuote({
       startDate: "2026-07-01",
       endDate: "2026-07-05",
-      vehicleType: "classA",
+      vehicleType: "classC",
       vehicleModel: "23ft_2020_2026",
       kmPackages: 0,
       extraKm: 0,
@@ -115,30 +117,27 @@ describe("Multi-day totals & season spans", () => {
       windshieldCoverage: false,
       generatorDailyUnlimited: false,
     });
-    assert.strictEqual(a.breakdown.dailyRateTotal, 224 * 5);
+    assert.strictEqual(c.breakdown.dailyRateTotal, 224 * 5);
     assert.strictEqual(b.breakdown.dailyRateTotal, 244 * 5);
-    assert.strictEqual(a.breakdown.prepFee, 199);
+    assert.strictEqual(c.breakdown.prepFee, 149);
     assert.strictEqual(b.breakdown.prepFee, 149);
   });
 });
 
-describe("Legacy classC daily keys (breaking change guard)", () => {
-  it("rejects classC + former classC model (must use classA per PDF)", () => {
-    assert.throws(
-      () =>
-        calculateRentalQuote({
-          startDate: "2026-01-01",
-          endDate: "2026-01-05",
-          vehicleType: "classC",
-          vehicleModel: "25ft_slideout_2021_2023",
-          kmPackages: 0,
-          extraKm: 0,
-          generatorHours: 0,
-          cancellationWaiver: false,
-          windshieldCoverage: false,
-          generatorDailyUnlimited: false,
-        }),
-      /Unknown vehicle model/,
-    );
+describe("Class C models resolve under classC", () => {
+  it("accepts classC + 25ft_slideout_2021_2023", () => {
+    const q = calculateRentalQuote({
+      startDate: "2026-01-01",
+      endDate: "2026-01-05",
+      vehicleType: "classC",
+      vehicleModel: "25ft_slideout_2021_2023",
+      kmPackages: 0,
+      extraKm: 0,
+      generatorHours: 0,
+      cancellationWaiver: false,
+      windshieldCoverage: false,
+      generatorDailyUnlimited: false,
+    });
+    assert.strictEqual(q.breakdown.dailyRateTotal, 94 * 5);
   });
 });
