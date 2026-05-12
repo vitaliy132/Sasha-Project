@@ -37,20 +37,22 @@ router.post("/availability-request", asyncHandler(async (req, res) => {
   try {
     // Format the request for email
     const subject = `Availability Request | ${name}`;
-    const body = `
+    const textBody = `
 New Availability Request
 
 Name: ${name}
-Address: ${address || 'Not provided'}
-Phone: ${phone || 'Not provided'}
+Address: ${address || "Not provided"}
+Phone: ${phone || "Not provided"}
 Email: ${email}
 
 Rental Details:
-${JSON.stringify(rentalDetails, null, 2)}
+${rentalDetails != null ? JSON.stringify(rentalDetails, null, 2) : "(none provided)"}
     `.trim();
 
-    // Send email
-    await sendLeadEmail(body, { first_name: name.split(' ')[0], last_name: name.split(' ').slice(1).join(' ') || name });
+    await sendLeadEmail(
+      { subject, text: textBody },
+      { first_name: name.split(" ")[0], last_name: name.split(" ").slice(1).join(" ") || name }
+    );
 
     // Optionally store in sheet
     try {

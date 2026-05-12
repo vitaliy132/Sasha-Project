@@ -42,7 +42,8 @@ app.get("/", (req, res) => {
     message: "Lead webhook API for rental calculator",
     activeEndpoints: {
       rentalQuote: "POST /calculate-rental (used by FrontEndSasha)",
-      calculatorLead: "POST /submit-lead (used by FrontEndSasha)",
+      calculatorLead:
+        "POST /submit-lead — name, email, phone, address, quote; optional vehicleType, vehicleModel, vehicleModelLabel, startDate, endDate, add-ons (same flags as /calculate-rental), additionalNotes, rentalDetails, quoteBreakdown (all included in CRM email)",
       manychatWebhook: "POST /api/leads/manychat",
     },
     debugEndpoints: {

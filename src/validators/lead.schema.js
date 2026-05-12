@@ -10,4 +10,14 @@ module.exports = Joi.object({
   notes: Joi.string().allow(""),
   platform: Joi.string(),
   campaign: Joi.string().allow(""),
+  /** Rental calculator: vehicle and trip (optional). */
+  vehicle_type: Joi.string().allow("").optional(),
+  vehicle_model: Joi.string().allow("").optional(),
+  rental_start: Joi.string().allow("").optional(),
+  rental_end: Joi.string().allow("").optional(),
+  /** Human-readable add-ons / options (optional). */
+  rental_extras: Joi.string().allow("").optional(),
+  customer_notes: Joi.string().allow("").optional(),
+  /** Rental calculator submitted total (e.g. $1,234.56). */
+  quoted_total: Joi.string().allow("").optional(),
 });
