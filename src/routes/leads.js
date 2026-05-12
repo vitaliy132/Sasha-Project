@@ -10,7 +10,8 @@ const isAuthorized = (providedSecret) => providedSecret === process.env.WEBHOOK_
 const buildTestLead = () => ({
   first_name: "Test",
   last_name: "Lead",
-  email: process.env.CRM_EMAIL,
+  /** Placeholder only — do not mirror CRM_EMAIL here or it appears in the lead "Email" row. */
+  email: "test-lead@example.com",
   phone: "555-0000",
   platform: "manual-test",
 });

@@ -19,6 +19,10 @@ services:
         sync: false
       - key: CRM_EMAIL
         sync: false
+      # Optional: visible "To" for lead mail (e.g. leads@em9990.rvvacations.com). CRM_EMAIL is Bcc'd
+      # so a personal Gmail is not shown as the primary recipient. Omit to keep To = CRM_EMAIL.
+      - key: LEAD_EMAIL_TO
+        sync: false
       # Optional: use SendGrid instead of SMTP for outbound lead mail
       - key: SENDGRID_API_KEY
         sync: false

@@ -6,7 +6,7 @@ const morgan = require("morgan");
 
 const { HTTP_STATUS } = require("./utils/constants");
 const logger = require("./utils/logger");
-const { verifySmtp } = require("./services/mailer");
+const { verifySmtp, getLeadNotificationRecipients } = require("./services/mailer");
 const app = express();
 
 const REQUIRED_ENV = ["WEBHOOK_SECRET", "SMTP_HOST", "SMTP_USER", "SMTP_PASS", "CRM_EMAIL"];
@@ -18,6 +18,7 @@ const OPTIONAL_ENV = [
   "SENDGRID_API_KEY",
   "SENDGRID_FROM",
   "SENDGRID_FROM_NAME",
+  "LEAD_EMAIL_TO",
 ];
 const hasEnv = (key) => !!process.env[key]?.trim();
 
@@ -117,8 +118,10 @@ app.get("/api/sendgrid-check", async (req, res) => {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
     const fromEmail = process.env.SENDGRID_FROM.trim();
     const fromName = (process.env.SENDGRID_FROM_NAME || "ManyChat Leads").trim() || "ManyChat Leads";
+    const { to, bcc } = getLeadNotificationRecipients();
     await sgMail.send({
-      to: process.env.CRM_EMAIL,
+      to,
+      ...(bcc ? { bcc } : {}),
       from: { email: fromEmail, name: fromName },
       subject: "SendGrid Configuration Test",
       text: "If you see this, SendGrid is configured correctly.",
@@ -129,7 +132,8 @@ app.get("/api/sendgrid-check", async (req, res) => {
       message: "SendGrid test email sent successfully",
       from: fromEmail,
       fromName,
-      to: process.env.CRM_EMAIL,
+      to,
+      ...(bcc ? { bcc } : {}),
     });
   } catch (err) {
     logger.error("SendGrid check failed:", err.message || err);
