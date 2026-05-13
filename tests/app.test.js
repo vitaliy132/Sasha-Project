@@ -18,6 +18,11 @@ const app = require("../src/app.js");
 const schema = require("../src/validators/lead.schema.js");
 const { formatLeadEmail } = require("../src/services/formatter.js");
 const { runRentalQuoteValidationTests } = require("../src/services/rentalQuote.js");
+const {
+  DEFAULT_SENDGRID_FROM,
+  resolveFromAddress,
+  validateSendGridFrom,
+} = require("../src/services/emailConfig.js");
 
 let server;
 let baseUrl;
@@ -28,6 +33,26 @@ describe("Env and config", () => {
     required.forEach((key) => {
       assert.ok(process.env[key]?.trim(), `Missing env: ${key}`);
     });
+  });
+
+  it("defaults SendGrid sender to the verified domain", () => {
+    const from = resolveFromAddress({ SENDGRID_API_KEY: "SG.test" });
+
+    assert.strictEqual(from, DEFAULT_SENDGRID_FROM);
+  });
+
+  it("rejects SendGrid senders outside the verified domain", () => {
+    const invalidError = validateSendGridFrom({
+      SENDGRID_API_KEY: "SG.test",
+      SENDGRID_FROM: "old-sender@example.com",
+    });
+    const validError = validateSendGridFrom({
+      SENDGRID_API_KEY: "SG.test",
+      SENDGRID_FROM: "leads@em9990.rvvacations.com",
+    });
+
+    assert.match(invalidError, /em9990\.rvvacations\.com/);
+    assert.strictEqual(validError, null);
   });
 });
 

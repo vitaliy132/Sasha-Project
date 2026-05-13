@@ -6,10 +6,19 @@ const morgan = require("morgan");
 
 const { HTTP_STATUS } = require("./utils/constants");
 const logger = require("./utils/logger");
-const { verifySmtp, getLeadNotificationRecipients } = require("./services/mailer");
+const {
+  DEFAULT_FROM_NAME,
+  DEFAULT_SENDGRID_FROM,
+  validateSendGridFrom,
+} = require("./services/emailConfig");
 const app = express();
 
-const REQUIRED_ENV = ["WEBHOOK_SECRET", "SMTP_HOST", "SMTP_USER", "SMTP_PASS", "CRM_EMAIL"];
+const hasEnv = (key) => !!process.env[key]?.trim();
+const BASE_REQUIRED_ENV = ["WEBHOOK_SECRET", "CRM_EMAIL"];
+const SMTP_REQUIRED_ENV = ["SMTP_HOST", "SMTP_USER", "SMTP_PASS"];
+const REQUIRED_ENV = hasEnv("SENDGRID_API_KEY")
+  ? BASE_REQUIRED_ENV
+  : [...BASE_REQUIRED_ENV, ...SMTP_REQUIRED_ENV];
 const OPTIONAL_ENV = [
   "GOOGLE_SHEET_ID",
   "GOOGLE_PROJECT_ID",
@@ -20,17 +29,20 @@ const OPTIONAL_ENV = [
   "SENDGRID_FROM_NAME",
   "LEAD_EMAIL_TO",
 ];
-const hasEnv = (key) => !!process.env[key]?.trim();
 
 const missing = REQUIRED_ENV.filter((key) => !hasEnv(key));
-if (process.env.SENDGRID_API_KEY && !hasEnv("SENDGRID_FROM")) {
-  missing.push("SENDGRID_FROM");
-}
+const sendGridFromError = validateSendGridFrom();
 
 if (missing.length) {
   logger.error("Missing required env:", [...new Set(missing)].join(", "));
   process.exit(1);
 }
+if (sendGridFromError) {
+  logger.error(sendGridFromError);
+  process.exit(1);
+}
+
+const { verifySmtp, getLeadNotificationRecipients } = require("./services/mailer");
 
 app.use(helmet());
 app.use(cors());
@@ -66,7 +78,7 @@ app.get("/api/env-check", (req, res) => {
   const required = Object.fromEntries(REQUIRED_ENV.map((key) => [key, hasEnv(key)]));
   const optional = Object.fromEntries(OPTIONAL_ENV.map((key) => [key, hasEnv(key)]));
   const allRequired = REQUIRED_ENV.every((key) => required[key]);
-  const sendgridConfigured = hasEnv("SENDGRID_API_KEY") && hasEnv("SENDGRID_FROM");
+  const sendgridConfigured = hasEnv("SENDGRID_API_KEY") && !validateSendGridFrom();
   const smtpConfigured = hasEnv("SMTP_HOST") && hasEnv("SMTP_USER") && hasEnv("SMTP_PASS");
   const emailProvider = sendgridConfigured ? "SendGrid" : smtpConfigured ? "SMTP" : "none";
   res.json({
@@ -103,21 +115,22 @@ app.get("/api/sendgrid-check", async (req, res) => {
     return res.status(HTTP_STATUS.BAD_REQUEST).json({
       ok: false,
       error: "SendGrid not configured",
-      message: "Set SENDGRID_API_KEY and SENDGRID_FROM environment variables",
+      message: "Set SENDGRID_API_KEY. SENDGRID_FROM defaults to the verified domain sender.",
     });
   }
-  if (!process.env.SENDGRID_FROM) {
+  const fromError = validateSendGridFrom();
+  if (fromError) {
     return res.status(HTTP_STATUS.BAD_REQUEST).json({
       ok: false,
-      error: "SendGrid from address missing",
-      message: "Set SENDGRID_FROM to a verified sender address in SendGrid",
+      error: "SendGrid from address invalid",
+      message: fromError,
     });
   }
   try {
     const sgMail = require("@sendgrid/mail");
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    const fromEmail = process.env.SENDGRID_FROM.trim();
-    const fromName = (process.env.SENDGRID_FROM_NAME || "ManyChat Leads").trim() || "ManyChat Leads";
+    const fromEmail = process.env.SENDGRID_FROM?.trim() || DEFAULT_SENDGRID_FROM;
+    const fromName = (process.env.SENDGRID_FROM_NAME || DEFAULT_FROM_NAME).trim() || DEFAULT_FROM_NAME;
     const { to, bcc } = getLeadNotificationRecipients();
     await sgMail.send({
       to,

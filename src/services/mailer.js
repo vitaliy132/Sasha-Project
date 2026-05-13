@@ -1,10 +1,15 @@
 const nodemailer = require("nodemailer");
 const sgMail = require("@sendgrid/mail");
+const {
+  DEFAULT_FROM_NAME,
+  resolveFromAddress,
+  validateSendGridFrom,
+} = require("./emailConfig");
 
-const useSendGrid = !!process.env.SENDGRID_API_KEY;
-const FROM_ADDRESS = process.env.SENDGRID_FROM || process.env.SMTP_USER || process.env.CRM_EMAIL;
+const useSendGrid = !!process.env.SENDGRID_API_KEY?.trim();
+const FROM_ADDRESS = resolveFromAddress();
 /** Display name shown in the inbox (SendGrid + SMTP). */
-const FROM_NAME = (process.env.SENDGRID_FROM_NAME || "ManyChat Leads").trim() || "ManyChat Leads";
+const FROM_NAME = (process.env.SENDGRID_FROM_NAME || DEFAULT_FROM_NAME).trim() || DEFAULT_FROM_NAME;
 
 /**
  * Lead mail "To" vs Bcc: when LEAD_EMAIL_TO is set and differs from CRM_EMAIL, the visible To line
@@ -18,6 +23,11 @@ const getLeadNotificationRecipients = () => {
   return usePublicTo ? { to: publicTo, bcc: crm } : { to: crm, bcc: undefined };
 };
 exports.getLeadNotificationRecipients = getLeadNotificationRecipients;
+
+const sendGridFromError = validateSendGridFrom();
+if (sendGridFromError) {
+  throw new Error(sendGridFromError);
+}
 
 if (!FROM_ADDRESS) {
   throw new Error(
@@ -57,7 +67,7 @@ exports.sendLeadEmail = async (body, lead) => {
   const { to, bcc } = getLeadNotificationRecipients();
 
   const mailOptions = {
-    from: `"ManyChat Leads" <${FROM_ADDRESS}>`,
+    from: `"${FROM_NAME}" <${FROM_ADDRESS}>`,
     to,
     ...(bcc ? { bcc } : {}),
     subject,
