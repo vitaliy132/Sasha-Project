@@ -30,4 +30,4 @@ services:
       - key: SENDGRID_FROM
         value: leads@em9990.rvvacations.com
       - key: SENDGRID_FROM_NAME
-        sync: false
+        value: RV Vacations
