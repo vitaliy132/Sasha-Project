@@ -1,6 +1,6 @@
 const VERIFIED_SENDGRID_DOMAIN = "em9990.rvvacations.com";
 const DEFAULT_SENDGRID_FROM = `leads@${VERIFIED_SENDGRID_DOMAIN}`;
-const DEFAULT_FROM_NAME = "RV Vacations";
+const DEFAULT_FROM_NAME = "ManyChat Leads";
 
 const trim = (value) => String(value || "").trim();
 
