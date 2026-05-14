@@ -379,7 +379,8 @@ describe("Formatter", () => {
       notes: "Quote: $100",
     };
     const body = formatLeadEmail(lead);
-    assert.ok(body.text.startsWith("New Lead from Rental Calculator"));
+    assert.ok(body.text.startsWith("New Rental Lead"));
+    assert.ok(body.html.includes("<h2>New Rental Lead</h2>"));
   });
 
   it("formats lead email with required fields", () => {
@@ -397,7 +398,8 @@ describe("Formatter", () => {
     assert.ok(body.text.includes("Last Name: Doe"));
     assert.ok(body.text.includes("Email: jane@example.com"));
     assert.ok(body.html.includes("New Lead from ManyChat"));
-    assert.ok(body.html.includes("First Name</td>"));
+    assert.ok(body.html.includes("<strong>Customer:</strong> Jane Doe"));
+    assert.ok(body.html.includes("<strong>Email:</strong> jane@example.com"));
   });
 
   it("includes rental calculator selections block for calculator leads", () => {
@@ -422,6 +424,10 @@ describe("Formatter", () => {
     assert.ok(body.text.includes("Start date: 2026-06-01"));
     assert.ok(body.text.includes("Vehicle type: Class A"));
     assert.ok(body.text.includes("Generator option selected: None ($0)"));
+    assert.ok(body.html.includes("<h3>Trip Details</h3>"));
+    assert.ok(body.html.includes("<strong>Start:</strong> 2026-06-01"));
+    assert.ok(body.html.includes("<strong>Vehicle:</strong> Class A"));
+    assert.ok(body.html.includes("<strong>Total Quote:</strong> $1,000.00"));
     assert.ok(!body.text.includes("Rental start:"));
   });
 
