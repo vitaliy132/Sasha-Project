@@ -379,8 +379,8 @@ describe("Formatter", () => {
       notes: "Quote: $100",
     };
     const body = formatLeadEmail(lead);
-    assert.ok(body.text.startsWith("New Rental Lead"));
-    assert.ok(body.html.includes("<h2>New Rental Lead</h2>"));
+    assert.ok(body.text.startsWith("Outdoor Travel Rental Lead"));
+    assert.ok(body.html.includes("<h2>Outdoor Travel Rental Lead</h2>"));
   });
 
   it("formats lead email with required fields", () => {

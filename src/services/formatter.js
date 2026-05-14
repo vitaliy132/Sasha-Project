@@ -17,7 +17,7 @@ const hasValue = (value) => value != null && String(value).trim() !== "";
 const cleanValue = (value) => String(value).trim();
 
 const leadSourceTitle = (platform) => {
-  if (platform === "rental-calculator") return "New Rental Lead";
+  if (platform === "rental-calculator") return "Outdoor Travel Rental Lead";
   if (platform === "manychat") return "New Lead from ManyChat";
   return "New Lead";
 };
