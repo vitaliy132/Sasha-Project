@@ -189,7 +189,7 @@ const MODEL_OPTION_LABEL = {
   "25ft_slideout_2021_2023": "25 with slide out - 2021-2026",
   "25ft_slideout_2018_economy": "25 with slide out - Economy 2018",
   "23ft_2020_2026": "23 - 2020-2026",
-  "23ft_2021_2023": "23 - 2021-2026",
+  "23ft_2021_2023": "23 - 2021-2023",
   "19ft_2023": "19 - 2023-2026",
   "27ft_bunks_2024": "27 with bunks - 2024-2026",
 };

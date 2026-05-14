@@ -107,6 +107,12 @@ describe("API", () => {
       assert.strictEqual(classC.defaultModel, "25ft_slideout_2021_2023");
       assert.ok(classC.models.some((model) => model.id === "25ft_slideout_2021_2023"));
       assert.strictEqual(classC.models.some((model) => "PREMIUM" in model), false);
+
+      const classB = body.vehicleTypes.find((type) => type.id === "classB");
+      assert.ok(classB);
+      assert.deepStrictEqual(classB.models, [
+        { id: "23ft_2021_2023", label: "Class B - 23 - 2021-2023" },
+      ]);
     });
   });
 
