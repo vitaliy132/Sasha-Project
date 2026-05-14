@@ -56,6 +56,7 @@ app.get("/", (req, res) => {
     message: "Lead webhook API for rental calculator",
     activeEndpoints: {
       rentalQuote: "POST /calculate-rental (used by FrontEndSasha)",
+      rentalOptions: "GET /rental-options (vehicle choices and calculator policy)",
       calculatorLead:
         "POST /submit-lead — name, email, phone, address, quote; optional calculator fields (vehicleType, vehicleModel, vehicleModelLabel, startDate, endDate, add-ons as /calculate-rental, personalKitPeople or beddingKitPeople, additionalNotes, rentalDetails, quoteBreakdown). CRM email includes a full “Rental calculator selections” lead block with dates, vehicle, waiver/coverage/kits, km packages, extra-km copy, and generator option.",
       manychatWebhook: "POST /api/leads/manychat",
@@ -161,6 +162,7 @@ app.get("/api/sendgrid-check", async (req, res) => {
 
 app.use("/api/leads", require("./routes/leads"));
 // DEPRECATED: /calculate endpoint replaced by /calculate-rental
+app.use("/rental-options", require("./routes/rentalOptions"));
 app.use("/calculate-rental", require("./routes/rental"));
 app.use("/submit-lead", require("./routes/submitLead"));
 app.use("/api", require("./routes/availability"));

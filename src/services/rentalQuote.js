@@ -5,6 +5,7 @@ const { roundToTwo, getSeason, mmdd, inSeasonRange, formatCurrency } = require("
 const pricingConfig = require("../config/rentalPricing.json");
 const {
   TAX_RATE,
+  MINIMUM_RENTAL_DAYS,
   MIN_CHARGE_DAYS_FOR_DAILY_RATE,
   CDW_DAILY_RATE,
   CDW_MINIMUM,
@@ -171,6 +172,53 @@ const DEPRECATED_CLASS_A_VEHICLE_MODELS = {
   "35ft_2025": "35_36ft_slideout_bunks_2025",
   "36ft_2025": "35_36ft_slideout_bunks_2025",
 };
+
+const VEHICLE_TYPE_LABEL = {
+  classA: "Class A",
+  classB: "Class B",
+  classC: "Class C",
+  trailer: "Travel trailer",
+};
+
+const MODEL_OPTION_LABEL = {
+  "30ft_2024": "30 with slide out - 2024-2026",
+  "32ft_2017": "32 with slide out/bunks - Economy 2017",
+  "34ft_2023": "34 with slide out - 2023-2026",
+  "35_36ft_slideout_bunks_2025": "35-36 with slide out/bunks - 2025-2026",
+  "31ft_slideout_bunks_2019": "31 with slide out/bunks - 2019-2026",
+  "25ft_slideout_2021_2023": "25 with slide out - 2021-2026",
+  "25ft_slideout_2018_economy": "25 with slide out - Economy 2018",
+  "23ft_2020_2026": "23 - 2020-2026",
+  "23ft_2021_2023": "23 - 2021-2026",
+  "19ft_2023": "19 - 2023-2026",
+  "27ft_bunks_2024": "27 with bunks - 2024-2026",
+};
+
+function formatModelOptionLabel(vehicleType, modelId) {
+  const typeLabel = VEHICLE_TYPE_LABEL[vehicleType] || vehicleType;
+  const modelLabel = MODEL_OPTION_LABEL[modelId];
+  if (modelLabel) return `${typeLabel} - ${modelLabel}`;
+
+  const parts = modelId.split("_");
+  if (parts.length < 2) return modelId.replaceAll("_", " ");
+  const size = parts[0].replace("ft", "");
+  return `${typeLabel} ${size}`;
+}
+
+function getRentalOptions() {
+  return {
+    minimumRentalDays: MINIMUM_RENTAL_DAYS,
+    vehicleTypes: VALID_VEHICLE_TYPES.map((vehicleType) => ({
+      id: vehicleType,
+      label: VEHICLE_TYPE_LABEL[vehicleType] || vehicleType,
+      defaultModel: defaults?.vehicleModelByType?.[vehicleType] || "",
+      models: listVehicleModels(vehicleType).map((modelId) => ({
+        id: modelId,
+        label: formatModelOptionLabel(vehicleType, modelId),
+      })),
+    })),
+  };
+}
 
 const sanitizePayload = (raw) => {
   const vt = raw?.vehicleType;
@@ -484,6 +532,7 @@ module.exports = {
   getSeason,
   listVehicleModels,
   resolvePricingRow,
+  getRentalOptions,
   calculateRentalQuote,
   sanitizePayload,
   SEASON_DEFINITIONS,

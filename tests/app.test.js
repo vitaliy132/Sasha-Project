@@ -90,6 +90,25 @@ describe("API", () => {
     });
   });
 
+  describe("GET /rental-options", () => {
+    it("returns vehicle choices without exposing rate tables", async () => {
+      const res = await fetch(baseUrl + "/rental-options");
+      assert.strictEqual(res.status, 200);
+      const body = await res.json();
+
+      assert.strictEqual(body.minimumRentalDays, 5);
+      assert.ok(Array.isArray(body.vehicleTypes));
+      assert.ok(body.vehicleTypes.length > 0);
+
+      const classC = body.vehicleTypes.find((type) => type.id === "classC");
+      assert.ok(classC);
+      assert.strictEqual(classC.label, "Class C");
+      assert.strictEqual(classC.defaultModel, "25ft_slideout_2021_2023");
+      assert.ok(classC.models.some((model) => model.id === "25ft_slideout_2021_2023"));
+      assert.strictEqual(classC.models.some((model) => "PREMIUM" in model), false);
+    });
+  });
+
   describe("GET /api/env-check", () => {
     it("returns env key presence without values", async () => {
       const res = await fetch(baseUrl + "/api/env-check");
@@ -141,7 +160,7 @@ describe("API", () => {
       assert.strictEqual(body.lineItems[0].name, "Daily Rental");
     });
 
-    it("charges minimum 5 days of daily rates when calendar rental is 3 days", async () => {
+    it("rejects rentals shorter than the minimum rental period", async () => {
       const res = await fetch(baseUrl + "/calculate-rental", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -156,14 +175,9 @@ describe("API", () => {
         }),
       });
 
-      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.status, 400);
       const body = await res.json();
-      assert.strictEqual(body.breakdown.days, 3);
-      assert.strictEqual(body.breakdown.dailyRateTotal, 289 * 5);
-      assert.strictEqual(body.breakdown.cdw, 210);
-      assert.strictEqual(body.breakdown.prepFee, 199);
-      assert.ok(body.summaryMessage.includes("CDW Plus"));
-      assert.ok(body.summaryMessage.includes("A $3000 security deposit is required on all rentals."));
+      assert.match(body.message, /Minimum rental period is 5 days/);
     });
 
     it("returns 400 when vehicleModel is unknown", async () => {
