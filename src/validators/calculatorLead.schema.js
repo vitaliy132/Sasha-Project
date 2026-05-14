@@ -22,7 +22,7 @@ const calculatorExtras = {
   bikeRack: Joi.boolean().optional(),
   hasOwnHitch: Joi.boolean().optional(),
   additionalNotes: Joi.string().trim().allow("").optional().default(""),
-  /** Any extra structured payload from the frontend (preserved verbatim in the lead email). */
+  /** Any extra structured payload from the frontend (rendered as readable email lines). */
   rentalDetails: Joi.object().unknown(true).optional(),
   quoteBreakdown: Joi.object().unknown(true).optional(),
 };

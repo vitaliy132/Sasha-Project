@@ -47,6 +47,83 @@ function yn(value) {
   return value === true ? "Yes" : "No";
 }
 
+const BREAKDOWN_LABELS = {
+  days: "Days",
+  dailyRateTotal: "Daily Rate",
+  cdw: "CDW",
+  prepFee: "Prep Fee",
+  kmPackages: "KM Packages",
+  hitch: "Hitch",
+  bikeRack: "Bike Rack",
+  winterization: "Winterization",
+  extraKm: "Extra KM",
+  generator: "Generator",
+  cancellationWaiver: "Cancellation Waiver",
+  windshield: "Windshield Coverage",
+  kitchenKit: "Kitchen Kit",
+  beddingKit: "Bedding Kit",
+  tax: "Tax",
+};
+
+const CURRENCY_BREAKDOWN_KEYS = new Set([
+  "dailyRateTotal",
+  "cdw",
+  "prepFee",
+  "kmPackages",
+  "hitch",
+  "bikeRack",
+  "winterization",
+  "extraKm",
+  "generator",
+  "cancellationWaiver",
+  "windshield",
+  "kitchenKit",
+  "beddingKit",
+  "tax",
+]);
+
+function titleizeKey(key) {
+  return String(key)
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatCurrency(value) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return String(value);
+  return `$${amount.toLocaleString("en-US", {
+    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+function formatStructuredValue(value, key = "") {
+  if (value == null) return "";
+  if (typeof value === "boolean") return yn(value);
+  if (typeof value === "number" && CURRENCY_BREAKDOWN_KEYS.has(key)) {
+    return formatCurrency(value);
+  }
+  if (Array.isArray(value)) return value.map((item) => formatStructuredValue(item)).join(", ");
+  if (typeof value === "object") return formatObjectLines(value).join("\n");
+  return String(value).trim();
+}
+
+function formatObjectLines(payload, labelMap = {}) {
+  return Object.entries(payload || {})
+    .map(([key, value]) => {
+      const formatted = formatStructuredValue(value, key);
+      if (!formatted) return null;
+      return `${labelMap[key] || titleizeKey(key)}: ${formatted}`;
+    })
+    .filter(Boolean);
+}
+
+function formatObjectSection(title, payload, labelMap = {}) {
+  const lines = formatObjectLines(payload, labelMap);
+  return lines.length ? `${title}:\n${lines.join("\n")}` : null;
+}
+
 /**
  * Human-readable snapshot for the CRM email (matches calculator copy / lead style).
  */
@@ -130,10 +207,8 @@ router.post("/", asyncHandler(async (req, res) => {
 
   const notesParts = [
     idLine,
-    value.rentalDetails &&
-      `Additional form / calculator fields:\n${JSON.stringify(value.rentalDetails, null, 2)}`,
-    value.quoteBreakdown &&
-      `Quote breakdown:\n${JSON.stringify(value.quoteBreakdown, null, 2)}`,
+    value.rentalDetails && formatObjectSection("Additional form / calculator fields", value.rentalDetails),
+    value.quoteBreakdown && formatObjectSection("Quote breakdown", value.quoteBreakdown, BREAKDOWN_LABELS),
   ].filter(Boolean);
   const notes = notesParts.length ? notesParts.join("\n\n") : undefined;
 
