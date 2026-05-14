@@ -35,24 +35,25 @@ describe("Env and config", () => {
     });
   });
 
-  it("defaults SendGrid sender to the verified domain", () => {
+  it("defaults SendGrid sender to the configured default", () => {
     const from = resolveFromAddress({ SENDGRID_API_KEY: "SG.test" });
 
     assert.strictEqual(from, DEFAULT_SENDGRID_FROM);
+    assert.strictEqual(from, "quote@rvvacations.com");
   });
 
-  it("rejects SendGrid senders outside the verified domain", () => {
-    const invalidError = validateSendGridFrom({
+  it("accepts custom SendGrid senders without a domain restriction", () => {
+    const customError = validateSendGridFrom({
+      SENDGRID_API_KEY: "SG.test",
+      SENDGRID_FROM: "quote@rvvacations.com",
+    });
+    const alternateError = validateSendGridFrom({
       SENDGRID_API_KEY: "SG.test",
       SENDGRID_FROM: "old-sender@example.com",
     });
-    const validError = validateSendGridFrom({
-      SENDGRID_API_KEY: "SG.test",
-      SENDGRID_FROM: "leads@em9990.rvvacations.com",
-    });
 
-    assert.match(invalidError, /em9990\.rvvacations\.com/);
-    assert.strictEqual(validError, null);
+    assert.strictEqual(customError, null);
+    assert.strictEqual(alternateError, null);
   });
 });
 

@@ -116,7 +116,7 @@ app.get("/api/sendgrid-check", async (req, res) => {
     return res.status(HTTP_STATUS.BAD_REQUEST).json({
       ok: false,
       error: "SendGrid not configured",
-      message: "Set SENDGRID_API_KEY. SENDGRID_FROM defaults to the verified domain sender.",
+      message: `Set SENDGRID_API_KEY. SENDGRID_FROM defaults to ${DEFAULT_SENDGRID_FROM}.`,
     });
   }
   const fromError = validateSendGridFrom();

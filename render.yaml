@@ -26,8 +26,8 @@ services:
       # Optional: use SendGrid instead of SMTP for outbound lead mail
       - key: SENDGRID_API_KEY
         sync: false
-      # Full address on the verified SendGrid domain.
+      # Full SendGrid sender address.
       - key: SENDGRID_FROM
-        value: leads@em9990.rvvacations.com
+        value: quote@rvvacations.com
       - key: SENDGRID_FROM_NAME
         sync: false
