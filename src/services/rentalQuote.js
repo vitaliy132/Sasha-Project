@@ -177,21 +177,21 @@ const VEHICLE_TYPE_LABEL = {
   classA: "Class A",
   classB: "Class B",
   classC: "Class C",
-  trailer: "Travel trailer",
+  trailer: "Travel Trailer",
 };
 
 const MODEL_OPTION_LABEL = {
-  "30ft_2024": "30 with slide out - 2024-2026",
+  "30ft_2024": "30 with slide out - 2024",
   "32ft_2017": "32 with slide out/bunks - Economy 2017",
-  "34ft_2023": "34 with slide out - 2023-2026",
-  "35_36ft_slideout_bunks_2025": "35-36 with slide out/bunks - 2025-2026",
-  "31ft_slideout_bunks_2019": "31 with slide out/bunks - 2019-2026",
-  "25ft_slideout_2021_2023": "25 with slide out - 2021-2026",
+  "34ft_2023": "34 with slide out - 2023",
+  "35_36ft_slideout_bunks_2025": "35-36 with slide out/bunks",
+  "31ft_slideout_bunks_2019": "31 with slide out/bunks - 2019",
+  "25ft_slideout_2021_2023": "25 with slide out - 2021-2023",
   "25ft_slideout_2018_economy": "25 with slide out - Economy 2018",
   "23ft_2020_2026": "23 - 2020-2026",
   "23ft_2021_2023": "23 - 2021-2023",
-  "19ft_2023": "19 - 2023-2026",
-  "27ft_bunks_2024": "27 with bunks - 2024-2026",
+  "19ft_2023": "19 - 2023",
+  "27ft_bunks_2024": "27 + bunks - 2024",
 };
 
 function formatModelOptionLabel(vehicleType, modelId) {

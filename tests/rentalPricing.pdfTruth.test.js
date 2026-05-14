@@ -6,7 +6,7 @@ const { describe, it } = require("node:test");
 const assert = require("node:assert");
 const { parseISO } = require("date-fns");
 
-const { getSeason, calculateRentalQuote, PRICING } = require("../src/services/rentalQuote.js");
+const { getSeason, getRentalOptions, calculateRentalQuote, PRICING } = require("../src/services/rentalQuote.js");
 
 /** Operator matrix (internal keys). */
 const PDF_DAILY_RATES = {
@@ -47,6 +47,56 @@ describe("PDF daily rate tables (config vs PDF)", () => {
       });
     }
   }
+
+  it("contains exactly the approved vehicle pricing rows", () => {
+    assert.deepStrictEqual(PRICING, PDF_DAILY_RATES);
+  });
+});
+
+describe("Rental option labels", () => {
+  it("lists exactly the approved vehicle models", () => {
+    assert.deepStrictEqual(getRentalOptions().vehicleTypes, [
+      {
+        id: "classA",
+        label: "Class A",
+        defaultModel: "30ft_2024",
+        models: [
+          { id: "30ft_2024", label: "Class A - 30 with slide out - 2024" },
+          { id: "32ft_2017", label: "Class A - 32 with slide out/bunks - Economy 2017" },
+          { id: "34ft_2023", label: "Class A - 34 with slide out - 2023" },
+          { id: "35_36ft_slideout_bunks_2025", label: "Class A - 35-36 with slide out/bunks" },
+        ],
+      },
+      {
+        id: "classB",
+        label: "Class B",
+        defaultModel: "23ft_2021_2023",
+        models: [
+          { id: "23ft_2021_2023", label: "Class B - 23 - 2021-2023" },
+        ],
+      },
+      {
+        id: "classC",
+        label: "Class C",
+        defaultModel: "25ft_slideout_2021_2023",
+        models: [
+          { id: "31ft_slideout_bunks_2019", label: "Class C - 31 with slide out/bunks - 2019" },
+          { id: "25ft_slideout_2021_2023", label: "Class C - 25 with slide out - 2021-2023" },
+          { id: "25ft_slideout_2018_economy", label: "Class C - 25 with slide out - Economy 2018" },
+          { id: "23ft_2020_2026", label: "Class C - 23 - 2020-2026" },
+        ],
+      },
+      {
+        id: "trailer",
+        label: "Travel Trailer",
+        defaultModel: "19ft_2023",
+        models: [
+          { id: "19ft_2023", label: "Travel Trailer - 19 - 2023" },
+          { id: "27ft_bunks_2024", label: "Travel Trailer - 27 + bunks - 2024" },
+        ],
+      },
+    ]);
+  });
 });
 
 describe("Season boundaries (MM-DD, inclusive ranges)", () => {
