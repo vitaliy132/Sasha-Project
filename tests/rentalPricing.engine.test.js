@@ -6,8 +6,8 @@ const { describe, it } = require("node:test");
 const assert = require("node:assert");
 const { parseISO } = require("date-fns");
 
+const { getSeason } = require("../src/utils/pricingUtils.js");
 const {
-  getSeason,
   calculateRentalQuote,
   calendarRentalDays,
 } = require("../src/services/rentalQuote.js");

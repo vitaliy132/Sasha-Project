@@ -6,7 +6,8 @@ const { describe, it } = require("node:test");
 const assert = require("node:assert");
 const { parseISO } = require("date-fns");
 
-const { getSeason, getRentalOptions, calculateRentalQuote, PRICING } = require("../src/services/rentalQuote.js");
+const { getSeason } = require("../src/utils/pricingUtils.js");
+const { getRentalOptions, calculateRentalQuote, PRICING } = require("../src/services/rentalQuote.js");
 
 /** Operator matrix (internal keys). */
 const PDF_DAILY_RATES = {

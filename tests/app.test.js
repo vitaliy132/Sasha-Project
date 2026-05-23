@@ -17,7 +17,7 @@ process.env.CRM_EMAIL = "crm@test.com";
 const app = require("../src/app.js");
 const schema = require("../src/validators/lead.schema.js");
 const { formatLeadEmail } = require("../src/services/formatter.js");
-const { runRentalQuoteValidationTests } = require("../src/services/rentalQuote.js");
+const { runRentalQuoteValidationTests } = require("./rentalQuote.validation.test.js");
 const {
   DEFAULT_SENDGRID_FROM,
   resolveFromAddress,
@@ -146,8 +146,8 @@ describe("API", () => {
       assert.strictEqual(res.status, 200);
       const body = await res.json();
       assert.strictEqual(body.total, 1517.65);
-      assert.strictEqual(body.totalFormatted, "$1517.65");
-      assert.ok(body.summaryMessage.includes("Your estimated total for this rental is $1517.65."));
+      assert.strictEqual(body.totalFormatted, "$1,517.65");
+      assert.ok(body.summaryMessage.includes("Your estimated total for this rental is $1,517.65."));
       assert.ok(body.summaryMessage.includes("CDW Plus"));
       assert.ok(body.summaryMessage.includes("A $3000 security deposit is required on all rentals."));
       assert.ok(body.summaryMessage.includes("An additional $1000 awning deposit applies if awning use is selected."));

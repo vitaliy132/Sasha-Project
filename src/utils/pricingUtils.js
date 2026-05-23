@@ -61,9 +61,16 @@ function getSeason(date) {
 }
 
 /**
- * Format a number as currency
+ * Format a number as currency (with thousands separators).
  */
-const formatCurrency = (value) => `$${roundToTwo(value).toFixed(2)}`;
+function formatCurrency(value) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return String(value);
+  return `$${amount.toLocaleString("en-US", {
+    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
 
 module.exports = {
   roundToTwo,
