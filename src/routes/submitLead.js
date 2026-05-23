@@ -5,6 +5,8 @@ const { HTTP_STATUS, MESSAGES } = require("../utils/constants");
 const logger = require("../utils/logger");
 const schema = require("../validators/calculatorLead.schema");
 
+const { formatObjectLines } = require("../utils/structuredFormat");
+
 const router = express.Router();
 
 const EXTRA_KM_LINE =
@@ -82,13 +84,6 @@ const CURRENCY_BREAKDOWN_KEYS = new Set([
   "tax",
 ]);
 
-function titleizeKey(key) {
-  return String(key)
-    .replace(/[_-]+/g, " ")
-    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
 function formatCurrency(value) {
   const amount = Number(value);
   if (!Number.isFinite(amount)) return String(value);
@@ -98,29 +93,14 @@ function formatCurrency(value) {
   })}`;
 }
 
-function formatStructuredValue(value, key = "") {
-  if (value == null) return "";
-  if (typeof value === "boolean") return yn(value);
-  if (typeof value === "number" && CURRENCY_BREAKDOWN_KEYS.has(key)) {
-    return formatCurrency(value);
-  }
-  if (Array.isArray(value)) return value.map((item) => formatStructuredValue(item)).join(", ");
-  if (typeof value === "object") return formatObjectLines(value).join("\n");
-  return String(value).trim();
-}
-
-function formatObjectLines(payload, labelMap = {}) {
-  return Object.entries(payload || {})
-    .map(([key, value]) => {
-      const formatted = formatStructuredValue(value, key);
-      if (!formatted) return null;
-      return `${labelMap[key] || titleizeKey(key)}: ${formatted}`;
-    })
-    .filter(Boolean);
-}
+const structuredFormatOptions = {
+  currencyKeys: CURRENCY_BREAKDOWN_KEYS,
+  formatCurrency,
+  formatBool: yn,
+};
 
 function formatObjectSection(title, payload, labelMap = {}) {
-  const lines = formatObjectLines(payload, labelMap);
+  const lines = formatObjectLines(payload, labelMap, structuredFormatOptions);
   return lines.length ? `${title}:\n${lines.join("\n")}` : null;
 }
 

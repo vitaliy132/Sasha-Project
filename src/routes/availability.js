@@ -4,38 +4,9 @@ const { HTTP_STATUS } = require("../utils/constants");
 const logger = require("../utils/logger");
 const { sendLeadEmail } = require("../services/mailer");
 const { appendLeadToSheet } = require("../services/sheets");
+const { formatObjectBlock } = require("../utils/structuredFormat");
 
 const router = express.Router();
-
-function titleizeKey(key) {
-  return String(key)
-    .replace(/[_-]+/g, " ")
-    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function formatStructuredValue(value) {
-  if (value == null) return "";
-  if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (Array.isArray(value)) return value.map((item) => formatStructuredValue(item)).join(", ");
-  if (typeof value === "object") return formatObjectLines(value).join("\n");
-  return String(value).trim();
-}
-
-function formatObjectLines(payload) {
-  return Object.entries(payload || {})
-    .map(([key, value]) => {
-      const formatted = formatStructuredValue(value);
-      if (!formatted) return null;
-      return `${titleizeKey(key)}: ${formatted}`;
-    })
-    .filter(Boolean);
-}
-
-function formatObjectBlock(payload, emptyText = "(none provided)") {
-  const lines = formatObjectLines(payload);
-  return lines.length ? lines.join("\n") : emptyText;
-}
 
 /**
  * POST /api/availability-request

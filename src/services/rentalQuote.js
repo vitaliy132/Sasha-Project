@@ -1,6 +1,6 @@
 const assert = require("node:assert");
 const { addDays, differenceInCalendarDays, format, isValid, parseISO } = require("date-fns");
-const { roundToTwo, getSeason, mmdd, inSeasonRange, formatCurrency } = require("../utils/pricingUtils");
+const { roundToTwo, getSeason, formatCurrency } = require("../utils/pricingUtils");
 
 const pricingConfig = require("../config/rentalPricing.json");
 const {
@@ -13,15 +13,9 @@ const {
   KM_PACKAGE_1000KM_RATE,
   TRAILER_HITCH_FEE,
   EXTRA_KM_RATE,
-  GENERATOR_HOUR_RATE,
-  GENERATOR_DAILY_UNLIMITED_RATE,
-  CANCELLATION_DAILY_RATE,
-  CANCELLATION_MINIMUM,
   BIKE_RACK_FEE,
   WINTERIZATION_FEES,
   VALID_VEHICLE_TYPES,
-  SECURITY_DEPOSIT,
-  AWNING_DEPOSIT,
 } = require("../utils/pricingConstants");
 
 const { SEASONS: SEASON_DEFINITIONS, PRICING, ADD_ONS, defaults } = pricingConfig;

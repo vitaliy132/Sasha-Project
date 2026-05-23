@@ -42,12 +42,6 @@ const getLeadsSheet = async () => {
   return doc.sheetsByIndex[0];
 };
 
-const getRowsByEmail = async (email) => {
-  const sheet = await getLeadsSheet();
-  const rows = await sheet.getRows();
-  return { sheet, rows, row: rows.find((r) => r.get("email") === email) || null };
-};
-
 const formatLeadRow = (lead, isValid) => ({
   first_name: lead.first_name || "",
   last_name: lead.last_name || "",
@@ -56,20 +50,6 @@ const formatLeadRow = (lead, isValid) => ({
   validated: isValid ? "yes" : "no",
   sent_to_crm: "no",
 });
-
-exports.checkLeadExists = async (email) => {
-  if (!checkSheetEnv()) {
-    return null;
-  }
-
-  try {
-    const { row } = await getRowsByEmail(email);
-    return row;
-  } catch (err) {
-    logger.error("Error checking for existing lead:", err.message || err);
-    return null;
-  }
-};
 
 /**
  * Marks the specific sheet row that was just appended (same email may appear on multiple rows).
