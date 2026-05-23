@@ -19,6 +19,9 @@ services:
         sync: false
       - key: CRM_EMAIL
         sync: false
+      # Optional: second CRM inbox (Bcc on lead submissions with CRM_EMAIL).
+      - key: CRM_EMAIL2
+        sync: false
       # Optional: visible "To" for lead mail (e.g. leads@em9990.rvvacations.com). CRM_EMAIL is Bcc'd
       # so a personal Gmail is not shown as the primary recipient. Omit to keep To = CRM_EMAIL.
       - key: LEAD_EMAIL_TO
@@ -31,3 +34,7 @@ services:
         value: quote@rvvacations.com
       - key: SENDGRID_FROM_NAME
         sync: false
+      # CSP frame-ancestors for iframe embedding. Use "*" to allow any parent site,
+      # or comma-separated origins (e.g. https://www.example.com,https://app.example.com).
+      - key: FRAME_ANCESTORS
+        value: "*"

@@ -28,6 +28,7 @@ const OPTIONAL_ENV = [
   "SENDGRID_FROM",
   "SENDGRID_FROM_NAME",
   "LEAD_EMAIL_TO",
+  "CRM_EMAIL2",
 ];
 
 const missing = REQUIRED_ENV.filter((key) => !hasEnv(key));
@@ -42,9 +43,11 @@ if (sendGridFromError) {
   process.exit(1);
 }
 
-const { verifySmtp, getLeadNotificationRecipients } = require("./services/mailer");
+const { verifySmtp } = require("./services/mailer");
+const { getLeadNotificationRecipients } = require("./services/leadRecipients");
+const { getHelmetOptions } = require("./config/helmet");
 
-app.use(helmet());
+app.use(helmet(getHelmetOptions()));
 app.use(cors());
 app.use(morgan("combined"));
 app.use(express.json());

@@ -5,23 +5,13 @@ const {
   resolveFromAddress,
   validateSendGridFrom,
 } = require("./emailConfig");
+const { getLeadNotificationRecipients } = require("./leadRecipients");
 
 const useSendGrid = !!process.env.SENDGRID_API_KEY?.trim();
 const FROM_ADDRESS = resolveFromAddress();
 /** Display name shown in the inbox (SendGrid + SMTP). */
 const FROM_NAME = (process.env.SENDGRID_FROM_NAME || DEFAULT_FROM_NAME).trim() || DEFAULT_FROM_NAME;
 
-/**
- * Lead mail "To" vs Bcc: when LEAD_EMAIL_TO is set and differs from CRM_EMAIL, the visible To line
- * uses LEAD_EMAIL_TO (e.g. leads@em9990.rvvacations.com) and CRM_EMAIL receives a Bcc copy so a
- * personal inbox address is not shown as the primary recipient.
- */
-const getLeadNotificationRecipients = () => {
-  const crm = String(process.env.CRM_EMAIL || "").trim();
-  const publicTo = String(process.env.LEAD_EMAIL_TO || "").trim();
-  const usePublicTo = publicTo.length > 0 && publicTo.toLowerCase() !== crm.toLowerCase();
-  return usePublicTo ? { to: publicTo, bcc: crm } : { to: crm, bcc: undefined };
-};
 exports.getLeadNotificationRecipients = getLeadNotificationRecipients;
 
 const sendGridFromError = validateSendGridFrom();
