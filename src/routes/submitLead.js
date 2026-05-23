@@ -13,7 +13,7 @@ const EXTRA_KM_LINE =
 /** Short labels to match the rental calculator UI. */
 const VEHICLE_TYPE_SHORT = {
   classA: "Class A",
-  classB: "Class B",
+  classB: "Class B+ Mercedes",
   classC: "Class C",
   trailer: "Travel trailer",
 };

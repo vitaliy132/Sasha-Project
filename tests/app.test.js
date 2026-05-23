@@ -104,14 +104,14 @@ describe("API", () => {
       const classC = body.vehicleTypes.find((type) => type.id === "classC");
       assert.ok(classC);
       assert.strictEqual(classC.label, "Class C");
-      assert.strictEqual(classC.defaultModel, "25ft_slideout_2021_2023");
-      assert.ok(classC.models.some((model) => model.id === "25ft_slideout_2021_2023"));
+      assert.strictEqual(classC.defaultModel, "25ft_slideout_2020_2021");
+      assert.ok(classC.models.some((model) => model.id === "25ft_slideout_2020_2021"));
       assert.strictEqual(classC.models.some((model) => "PREMIUM" in model), false);
 
       const classB = body.vehicleTypes.find((type) => type.id === "classB");
       assert.ok(classB);
       assert.deepStrictEqual(classB.models, [
-        { id: "23ft_2021_2023", label: "Class B - 23 - 2021-2023" },
+        { id: "23ft_2021_2026", label: "Class B+ Mercedes - 23 - 2021-2026" },
       ]);
     });
   });
@@ -136,7 +136,7 @@ describe("API", () => {
           startDate: "2026-01-01",
           endDate: "2026-01-05",
           vehicleType: "classC",
-          vehicleModel: "25ft_slideout_2021_2023",
+          vehicleModel: "25ft_slideout_2020_2021",
           kmPackages: 1,
           generatorHours: 2,
           extraKm: 10,
@@ -175,7 +175,7 @@ describe("API", () => {
           startDate: "2026-07-01",
           endDate: "2026-07-03",
           vehicleType: "classA",
-          vehicleModel: "30ft_2024",
+          vehicleModel: "30ft_2026",
           kmPackages: 0,
           extraKm: 0,
           generatorHours: 0,
@@ -210,7 +210,7 @@ describe("API", () => {
           startDate: "2026-06-01",
           endDate: "2026-06-05",
           vehicleType: "trailer",
-          vehicleModel: "19ft_2023",
+          vehicleModel: "19ft_2023_2026",
           kmPackages: 0,
         }),
       });

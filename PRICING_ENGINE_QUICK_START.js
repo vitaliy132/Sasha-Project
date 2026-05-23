@@ -36,7 +36,7 @@ console.log(`  Tax: $${basic.tax}\n`);
 const crossSeason = calculatePrice({
   unitId: 'premium-001',
   unitType: 'class_a',
-  unitModel: '30ft_2024',
+  unitModel: '30ft_2026',
   startDate: '2026-06-28',
   endDate: '2026-07-15',
   mileage: { type: 'package', value: 2 }

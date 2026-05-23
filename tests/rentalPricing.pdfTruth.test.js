@@ -11,23 +11,23 @@ const { getSeason, getRentalOptions, calculateRentalQuote, PRICING } = require("
 /** Operator matrix (internal keys). */
 const PDF_DAILY_RATES = {
   classA: {
-    "30ft_2024": { PREMIUM: 289, PRIME: 234, SHOULDER: 154, ECONOMY: 119 },
+    "30ft_2026": { PREMIUM: 289, PRIME: 234, SHOULDER: 154, ECONOMY: 119 },
     "32ft_2017": { PREMIUM: 289, PRIME: 234, SHOULDER: 154, ECONOMY: 119 },
-    "34ft_2023": { PREMIUM: 314, PRIME: 259, SHOULDER: 179, ECONOMY: 144 },
-    "35_36ft_slideout_bunks_2025": { PREMIUM: 314, PRIME: 259, SHOULDER: 179, ECONOMY: 144 },
+    "34ft_2026": { PREMIUM: 314, PRIME: 259, SHOULDER: 179, ECONOMY: 144 },
+    "35_36ft_slideout_bunks_2026": { PREMIUM: 314, PRIME: 259, SHOULDER: 179, ECONOMY: 144 },
   },
   classC: {
-    "31ft_slideout_bunks_2019": { PREMIUM: 264, PRIME: 209, SHOULDER: 129, ECONOMY: 99 },
-    "25ft_slideout_2021_2023": { PREMIUM: 244, PRIME: 189, SHOULDER: 119, ECONOMY: 94 },
+    "31ft_slideout_bunks_2026": { PREMIUM: 264, PRIME: 209, SHOULDER: 129, ECONOMY: 99 },
+    "25ft_slideout_2020_2021": { PREMIUM: 244, PRIME: 189, SHOULDER: 119, ECONOMY: 94 },
     "25ft_slideout_2018_economy": { PREMIUM: 214, PRIME: 159, SHOULDER: 99, ECONOMY: 94 },
     "23ft_2020_2026": { PREMIUM: 224, PRIME: 174, SHOULDER: 109, ECONOMY: 84 },
   },
   classB: {
-    "23ft_2021_2023": { PREMIUM: 244, PRIME: 189, SHOULDER: 119, ECONOMY: 94 },
+    "23ft_2021_2026": { PREMIUM: 244, PRIME: 189, SHOULDER: 119, ECONOMY: 94 },
   },
   trailer: {
-    "19ft_2023": { PREMIUM: 174, PRIME: 134, SHOULDER: 89, ECONOMY: 84 },
-    "27ft_bunks_2024": { PREMIUM: 199, PRIME: 149, SHOULDER: 99, ECONOMY: 94 },
+    "19ft_2023_2026": { PREMIUM: 174, PRIME: 134, SHOULDER: 89, ECONOMY: 84 },
+    "27ft_bunks_2024_2026": { PREMIUM: 199, PRIME: 149, SHOULDER: 99, ECONOMY: 94 },
   },
 };
 
@@ -59,40 +59,40 @@ describe("Rental option labels", () => {
       {
         id: "classA",
         label: "Class A",
-        defaultModel: "30ft_2024",
+        defaultModel: "30ft_2026",
         models: [
-          { id: "30ft_2024", label: "Class A - 30 with slide out - 2024" },
-          { id: "32ft_2017", label: "Class A - 32 with slide out/bunks - Economy 2017" },
-          { id: "34ft_2023", label: "Class A - 34 with slide out - 2023" },
-          { id: "35_36ft_slideout_bunks_2025", label: "Class A - 35-36 with slide out/bunks" },
+          { id: "30ft_2026", label: "Class A - 30 with slide out - 2026" },
+          { id: "32ft_2017", label: "Class A - 32 with slide out/bunks - (Economy) 2017" },
+          { id: "34ft_2026", label: "Class A - 34 with slide out - 2026" },
+          { id: "35_36ft_slideout_bunks_2026", label: "Class A - 35-36 with slide out/bunks - 2026" },
         ],
       },
       {
         id: "classB",
-        label: "Class B",
-        defaultModel: "23ft_2021_2023",
+        label: "Class B+ Mercedes",
+        defaultModel: "23ft_2021_2026",
         models: [
-          { id: "23ft_2021_2023", label: "Class B - 23 - 2021-2023" },
+          { id: "23ft_2021_2026", label: "Class B+ Mercedes - 23 - 2021-2026" },
         ],
       },
       {
         id: "classC",
         label: "Class C",
-        defaultModel: "25ft_slideout_2021_2023",
+        defaultModel: "25ft_slideout_2020_2021",
         models: [
-          { id: "31ft_slideout_bunks_2019", label: "Class C - 31 with slide out/bunks - 2019" },
-          { id: "25ft_slideout_2021_2023", label: "Class C - 25 with slide out - 2021-2023" },
-          { id: "25ft_slideout_2018_economy", label: "Class C - 25 with slide out - Economy 2018" },
+          { id: "31ft_slideout_bunks_2026", label: "Class C - 31 with slide out/bunks - 2026" },
+          { id: "25ft_slideout_2020_2021", label: "Class C - 25 with slide out - 2021-2020" },
+          { id: "25ft_slideout_2018_economy", label: "Class C - Economy Rate: 25 with slide out - 2018" },
           { id: "23ft_2020_2026", label: "Class C - 23 - 2020-2026" },
         ],
       },
       {
         id: "trailer",
         label: "Travel Trailer",
-        defaultModel: "19ft_2023",
+        defaultModel: "19ft_2023_2026",
         models: [
-          { id: "19ft_2023", label: "Travel Trailer - 19 - 2023" },
-          { id: "27ft_bunks_2024", label: "Travel Trailer - 27 + bunks - 2024" },
+          { id: "19ft_2023_2026", label: "Travel Trailer - 19 - 2023-2026" },
+          { id: "27ft_bunks_2024_2026", label: "Travel Trailer - 27 with bunks - 2024-2026" },
         ],
       },
     ]);
@@ -129,7 +129,7 @@ describe("Multi-day totals & season spans", () => {
       startDate: "2026-06-28",
       endDate: "2026-07-02",
       vehicleType: "classC",
-      vehicleModel: "25ft_slideout_2021_2023",
+      vehicleModel: "25ft_slideout_2020_2021",
       kmPackages: 0,
       extraKm: 0,
       generatorHours: 0,
@@ -158,7 +158,7 @@ describe("Multi-day totals & season spans", () => {
       startDate: "2026-07-01",
       endDate: "2026-07-05",
       vehicleType: "classB",
-      vehicleModel: "23ft_2021_2023",
+      vehicleModel: "23ft_2021_2026",
       kmPackages: 0,
       extraKm: 0,
       generatorHours: 0,
@@ -174,12 +174,12 @@ describe("Multi-day totals & season spans", () => {
 });
 
 describe("Class C models resolve under classC", () => {
-  it("accepts classC + 25ft_slideout_2021_2023 (economy winter)", () => {
+  it("accepts classC + 25ft_slideout_2020_2021 (economy winter)", () => {
     const q = calculateRentalQuote({
       startDate: "2026-01-01",
       endDate: "2026-01-05",
       vehicleType: "classC",
-      vehicleModel: "25ft_slideout_2021_2023",
+      vehicleModel: "25ft_slideout_2020_2021",
       kmPackages: 0,
       extraKm: 0,
       generatorHours: 0,
@@ -188,5 +188,35 @@ describe("Class C models resolve under classC", () => {
       generatorDailyUnlimited: false,
     });
     assert.strictEqual(q.breakdown.dailyRateTotal, 94 * 5);
+  });
+});
+
+describe("Deprecated vehicle model keys", () => {
+  it("resolves legacy model ids to current pricing keys", () => {
+    const legacy = calculateRentalQuote({
+      startDate: "2026-07-01",
+      endDate: "2026-07-05",
+      vehicleType: "classA",
+      vehicleModel: "30ft_2024",
+      kmPackages: 0,
+      extraKm: 0,
+      generatorHours: 0,
+      cancellationWaiver: false,
+      windshieldCoverage: false,
+      generatorDailyUnlimited: false,
+    });
+    const current = calculateRentalQuote({
+      startDate: "2026-07-01",
+      endDate: "2026-07-05",
+      vehicleType: "classA",
+      vehicleModel: "30ft_2026",
+      kmPackages: 0,
+      extraKm: 0,
+      generatorHours: 0,
+      cancellationWaiver: false,
+      windshieldCoverage: false,
+      generatorDailyUnlimited: false,
+    });
+    assert.strictEqual(legacy.breakdown.dailyRateTotal, current.breakdown.dailyRateTotal);
   });
 });
