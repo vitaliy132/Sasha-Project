@@ -33,7 +33,7 @@ function runRentalQuoteValidationTests(options = {}) {
     ...over,
   });
 
-  run("CASE 1: 3 calendar days, CDW on, Class C shoulder daily min 5 days", (lg) => {
+  run("CASE 1: 2 billable days, CDW on, Class C shoulder daily min 5 days", (lg) => {
     const q = calculateRentalQuote(
       base({
         startDate: "2026-01-01",
@@ -41,12 +41,12 @@ function runRentalQuoteValidationTests(options = {}) {
       }),
     );
     lg(JSON.stringify(q.breakdown, null, 2));
-    assert.strictEqual(q.breakdown.days, 3);
+    assert.strictEqual(q.breakdown.days, 2);
     assert.strictEqual(q.breakdown.cdw, 210);
     assert.strictEqual(q.breakdown.dailyRateTotal, 94 * 5);
   });
 
-  run("CASE 2: 7 days in July (PREMIUM season), Class A 30ft", (lg) => {
+  run("CASE 2: 6 billable days in July (PREMIUM season), Class A 30ft", (lg) => {
     const q = calculateRentalQuote(
       base({
         startDate: "2026-07-01",
@@ -56,9 +56,9 @@ function runRentalQuoteValidationTests(options = {}) {
       }),
     );
     lg(JSON.stringify(q.breakdown, null, 2));
-    assert.strictEqual(q.breakdown.days, 7);
+    assert.strictEqual(q.breakdown.days, 6);
     assert.strictEqual(q.breakdown.cdw, 210);
-    assert.strictEqual(q.breakdown.dailyRateTotal, 289 * 7);
+    assert.strictEqual(q.breakdown.dailyRateTotal, 289 * 6);
   });
 
   run("CASE 3: Trailer + hitch 150", (lg) => {

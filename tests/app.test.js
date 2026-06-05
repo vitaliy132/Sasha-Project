@@ -134,7 +134,7 @@ describe("API", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           startDate: "2026-01-01",
-          endDate: "2026-01-05",
+          endDate: "2026-01-06",
           vehicleType: "classC",
           vehicleModel: "25ft_slideout_2020_2021",
           kmPackages: 1,
@@ -208,7 +208,7 @@ describe("API", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           startDate: "2026-06-01",
-          endDate: "2026-06-05",
+          endDate: "2026-06-06",
           vehicleType: "trailer",
           vehicleModel: "19ft_2023_2026",
           kmPackages: 0,

@@ -49,12 +49,11 @@ describe("Cross-season daily total", () => {
       generatorDailyUnlimited: false,
     });
     const days = calendarRentalDays(parseISO("2026-06-28"), parseISO("2026-07-02"));
-    assert.strictEqual(days, 5);
+    assert.strictEqual(days, 4);
     assert.strictEqual(getSeason(parseISO("2026-06-28")), "PRIME");
     assert.strictEqual(getSeason(parseISO("2026-06-29")), "PRIME");
     assert.strictEqual(getSeason(parseISO("2026-06-30")), "PRIME");
     assert.strictEqual(getSeason(parseISO("2026-07-01")), "PREMIUM");
-    assert.strictEqual(getSeason(parseISO("2026-07-02")), "PREMIUM");
     const expected = 189 * 3 + 244 * 2;
     assert.strictEqual(q.breakdown.dailyRateTotal, expected);
   });
@@ -179,7 +178,7 @@ describe("CDW minimum vs per-day", () => {
       windshieldCoverage: false,
       generatorDailyUnlimited: false,
     });
-    assert.strictEqual(q.breakdown.cdw, 12 * 30);
+    assert.strictEqual(q.breakdown.cdw, 11 * 30);
   });
 });
 
@@ -213,7 +212,7 @@ describe("Cancellation waiver caps", () => {
       windshieldCoverage: false,
       generatorDailyUnlimited: false,
     });
-    assert.strictEqual(q.breakdown.cancellationWaiver, 20 * 20);
+    assert.strictEqual(q.breakdown.cancellationWaiver, 19 * 20);
   });
 });
 
@@ -231,7 +230,7 @@ describe("Windshield coverage caps", () => {
       windshieldCoverage: true,
       generatorDailyUnlimited: false,
     });
-    assert.strictEqual(q.breakdown.days, 5);
+    assert.strictEqual(q.breakdown.days, 4);
     assert.strictEqual(q.breakdown.windshield, 250);
   });
 

@@ -22,7 +22,7 @@ const {
 const { ADD_ONS } = pricingConfig;
 
 const calendarRentalDays = (startDate, endDate) =>
-  differenceInCalendarDays(endDate, startDate) + 1;
+  differenceInCalendarDays(endDate, startDate);
 
 const billedDaysForDailyRates = (calendarDays) =>
   Math.max(calendarDays, MIN_CHARGE_DAYS_FOR_DAILY_RATE);

@@ -20,7 +20,7 @@ const validateDateRange = (value, helpers) => {
     });
   }
 
-  const calendarDays = differenceInCalendarDays(end, start) + 1;
+  const calendarDays = differenceInCalendarDays(end, start);
   if (calendarDays < MINIMUM_RENTAL_DAYS) {
     return helpers.error("any.invalid", {
       message: `Minimum rental period is ${MINIMUM_RENTAL_DAYS} days`,
